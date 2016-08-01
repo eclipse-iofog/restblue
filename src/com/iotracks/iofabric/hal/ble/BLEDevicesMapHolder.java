@@ -16,14 +16,16 @@ public class BLEDevicesMapHolder {
 
     private static final String DEVICES_LIST_NAME = "bledevices";
 
-    public static void addDevice(String macAddress, String name) {
+    public static void addDevice(String macAddress, String name, Long timestamp) {
         synchronized (bleDevices) {
-            System.out.println("addDevice : macaddress - " + macAddress + " and name - " + name + " adding... ");
+            //System.out.println("addDevice (add/update) : \n macaddress - " + macAddress + ",\n name - " + name + ",\n timestamp - " + timestamp );
             if(bleDevices.containsKey(macAddress)) {
-                bleDevices.get(macAddress).addAdvSignalTimestamp(System.currentTimeMillis());
-                bleDevices.get(macAddress).setName(name);
+                bleDevices.get(macAddress).addAdvSignalTimestamp(timestamp);
+                if(!name.trim().equals("(unknown)")) {
+                    bleDevices.get(macAddress).setName(name);
+                }
             } else {
-                bleDevices.put(macAddress, new BLEDevice(macAddress, name, System.currentTimeMillis()));
+                bleDevices.put(macAddress, new BLEDevice(macAddress, name, timestamp));
             }
         }
     }
@@ -36,16 +38,16 @@ public class BLEDevicesMapHolder {
                 Map.Entry<String, BLEDevice> entry = iter.next();
                 BLEDevice device = entry.getValue();
                 long diff = currentTime - device.getLastAdvSignal() ;
-                System.out.println("updating mac - " + entry.getKey() + " time diff = " + diff +  " + avrgSignal = " + device.getAvgAdvSignalInterval());
+                //System.out.println("updating mac - " + entry.getKey() + " time diff = " + diff +  " + avrgSignal = " + device.getAvgAdvSignalInterval());
                 switch (device.getBleStatus()){
                     case ACTIVE:
                         if( device.getAvgAdvSignalInterval() > 0L && diff > device.getAvgAdvSignalInterval() ) {
-                            System.out.println("inactivate device with mac - " + device.getMacAddress() + " and name - " + device.getName());
+                            //System.out.println("inactivate device with mac - " + device.getMacAddress() + " and name - " + device.getName());
                             device.inactivate();
                         }
                     case INACTIVE:
                         if( diff > device.getMaxAdvSignalInterval()) {
-                            System.out.println("removing device with mac - " + device.getMacAddress() + " and name - " + device.getName());
+                            //System.out.println("removing device with mac - " + device.getMacAddress() + " and name - " + device.getName());
                             iter.remove();
                         }
                 }
@@ -54,12 +56,10 @@ public class BLEDevicesMapHolder {
     }
 
     public static JsonObject getDevices() {
-        System.out.println("getDevices: " + bleDevices.size());
         synchronized (bleDevices) {
             JsonArrayBuilder devicesBuilder = Json.createArrayBuilder();
             bleDevices.forEach((k,v) -> devicesBuilder.add(v.toJson()) );
             JsonObjectBuilder jsonBuilder = Json.createObjectBuilder().add(DEVICES_LIST_NAME, devicesBuilder);
-            System.out.println("getDevices in sync: " + bleDevices.size());
             return jsonBuilder.build();
         }
     }

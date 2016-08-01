@@ -27,7 +27,7 @@ public class BLEAPIServer {
     EventLoopGroup workerGroup = new NioEventLoopGroup(10);
 
     static final boolean SSL = System.getProperty("ssl") != null;
-    static final int PORT = 54321;
+    static final int PORT = 56789;
 
     /**
      * Create and start HAL API server
@@ -59,7 +59,7 @@ public class BLEAPIServer {
                             });
 
             Channel ch = b.bind(PORT).sync().channel();
-            log.info("HAL API server started at port: " + PORT + "\n");
+            log.info("Bluetooth API server started at port: " + PORT + "\n");
             ch.closeFuture().sync();
         }finally{
             bossGroup.shutdownGracefully();
@@ -74,6 +74,6 @@ public class BLEAPIServer {
     protected void stop() throws Exception {
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
-        log.info("HAL API server stopped\n");
+        log.info("Bluetooth API server stopped\n");
     }
 }

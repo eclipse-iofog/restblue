@@ -4,9 +4,7 @@ import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * @author ilaryionava
@@ -94,7 +92,7 @@ public class BLEDevice {
     }
 
     public void inactivate() {
-        System.out.println("Inactivated");
+        //System.out.println("Inactivated");
         advSignalsTimestamps = new CircularFifoQueue<>(5);
         bleStatus = BLEStatus.INACTIVE;
         avgAdvSignalInterval = 0L;
@@ -102,9 +100,20 @@ public class BLEDevice {
 
     public void verify() {
         if(advSignalsTimestamps != null && advSignalsTimestamps.size() == 5) {
-            avgAdvSignalInterval = Collections.max(advSignalsTimestamps)*2;
+            List<Long> advSignalIntervals = new ArrayList<>(4);
+            List<Long> advSignalsTimestampsArray = new ArrayList<>(advSignalsTimestamps);
+            for(int i = 0; i + 1 < advSignalsTimestampsArray.size(); i++) {
+                advSignalIntervals.add(advSignalsTimestampsArray.get(i+1) - advSignalsTimestampsArray.get(i));
+            }
+            //System.out.println("advSignalsTimestamps : " + advSignalsTimestamps);
+            //System.out.println("advSignalIntervals : " + advSignalIntervals);
+            Long newAvgAdvSignalInterval = Collections.max(advSignalIntervals)*2;
+            if(newAvgAdvSignalInterval > 0L) {
+                avgAdvSignalInterval = newAvgAdvSignalInterval;
+            }
+            //System.out.println("avgAdvSignalInterval : " + avgAdvSignalInterval);
             bleStatus = BLEStatus.ACTIVE;
-            System.out.println("Verified!!!");
+            //System.out.println("!!! Verified !!! ");
         }
     }
 

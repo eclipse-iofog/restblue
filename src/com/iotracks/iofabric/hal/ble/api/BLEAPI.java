@@ -45,7 +45,6 @@ public class BLEAPI implements Runnable {
             synchronized (BLEAPI.class) {
                 if(instance == null){
                     instance = new BLEAPI();
-                    log.info("HAL API Instantiated.");
                 }
             }
         }
