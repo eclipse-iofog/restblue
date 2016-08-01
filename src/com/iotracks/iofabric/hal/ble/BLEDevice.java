@@ -94,15 +94,17 @@ public class BLEDevice {
     }
 
     public void inactivate() {
+        System.out.println("Inactivated");
         advSignalsTimestamps = new CircularFifoQueue<>(5);
         bleStatus = BLEStatus.INACTIVE;
         avgAdvSignalInterval = 0L;
     }
 
     public void verify() {
-        if(advSignalsTimestamps != null && advSignalsTimestamps.size() == 5 && avgAdvSignalInterval != 0L && bleStatus != BLEStatus.ACTIVE) {
+        if(advSignalsTimestamps != null && advSignalsTimestamps.size() == 5) {
             avgAdvSignalInterval = Collections.max(advSignalsTimestamps)*2;
             bleStatus = BLEStatus.ACTIVE;
+            System.out.println("Verified!!!");
         }
     }
 

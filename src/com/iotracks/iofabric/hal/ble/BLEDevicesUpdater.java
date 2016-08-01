@@ -8,7 +8,6 @@ public class BLEDevicesUpdater implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("triggering devices map update - " + System.currentTimeMillis());
         BLEDevicesMapHolder.updateDevices();
     }
 }

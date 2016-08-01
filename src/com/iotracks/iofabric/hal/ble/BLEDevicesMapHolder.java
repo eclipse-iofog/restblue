@@ -17,9 +17,8 @@ public class BLEDevicesMapHolder {
     private static final String DEVICES_LIST_NAME = "bledevices";
 
     public static void addDevice(String macAddress, String name) {
-        System.out.println("addDevice");
         synchronized (bleDevices) {
-            System.out.println("macaddress - " + macAddress + " and name - " + name + " adding... ");
+            System.out.println("addDevice : macaddress - " + macAddress + " and name - " + name + " adding... ");
             if(bleDevices.containsKey(macAddress)) {
                 bleDevices.get(macAddress).addAdvSignalTimestamp(System.currentTimeMillis());
                 bleDevices.get(macAddress).setName(name);
@@ -30,19 +29,17 @@ public class BLEDevicesMapHolder {
     }
 
     public static void updateDevices() {
-        System.out.println("updateDevices");
         synchronized (bleDevices) {
             long currentTime = System.currentTimeMillis();
-            System.out.println("cleaning... currentTime = " + currentTime);
             Iterator<Map.Entry<String, BLEDevice>> iter = bleDevices.entrySet().iterator();
             while (iter.hasNext()) {
                 Map.Entry<String, BLEDevice> entry = iter.next();
                 BLEDevice device = entry.getValue();
                 long diff = currentTime - device.getLastAdvSignal() ;
-                System.out.println("mac - " + entry.getKey() + " time diff = " + diff);
+                System.out.println("updating mac - " + entry.getKey() + " time diff = " + diff +  " + avrgSignal = " + device.getAvgAdvSignalInterval());
                 switch (device.getBleStatus()){
                     case ACTIVE:
-                        if( diff > device.getAvgAdvSignalInterval() ) {
+                        if( device.getAvgAdvSignalInterval() > 0L && diff > device.getAvgAdvSignalInterval() ) {
                             System.out.println("inactivate device with mac - " + device.getMacAddress() + " and name - " + device.getName());
                             device.inactivate();
                         }
@@ -57,11 +54,12 @@ public class BLEDevicesMapHolder {
     }
 
     public static JsonObject getDevices() {
-        System.out.println("getDevices");
+        System.out.println("getDevices: " + bleDevices.size());
         synchronized (bleDevices) {
             JsonArrayBuilder devicesBuilder = Json.createArrayBuilder();
             bleDevices.forEach((k,v) -> devicesBuilder.add(v.toJson()) );
             JsonObjectBuilder jsonBuilder = Json.createObjectBuilder().add(DEVICES_LIST_NAME, devicesBuilder);
+            System.out.println("getDevices in sync: " + bleDevices.size());
             return jsonBuilder.build();
         }
     }

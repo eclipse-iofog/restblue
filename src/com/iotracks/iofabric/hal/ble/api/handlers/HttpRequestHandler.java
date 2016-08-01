@@ -53,10 +53,10 @@ public class HttpRequestHandler implements Callable {
         if(urlType!=null) {
             switch (urlType) {
                 case GET_DEVICES_LIST:
-                    System.out.println("-------- GET_DEVICES_LIST request ------------");
+                    //System.out.println("-------- GET_DEVICES_LIST request ------------");
                     return handleGetDevicesRequest();
                 case GET_SERVICES_LIST:
-                    System.out.println("-------- GET_SERVICES_LIST request ------------");
+                    //System.out.println("-------- GET_SERVICES_LIST request ------------");
                     ByteBuf msgBytes = req.content();
                     String requestBody = msgBytes.toString(io.netty.util.CharsetUtil.US_ASCII);
                     JsonReader reader = Json.createReader(new StringReader(requestBody));
@@ -128,7 +128,6 @@ public class HttpRequestHandler implements Callable {
             return sendErrorResponse(errors);
         }*/
         bytesData.writeBytes(BLEDevicesMapHolder.getDevices().toString().getBytes());
-        System.out.println("Sending devices");
         return sendResponse();
     }
 
