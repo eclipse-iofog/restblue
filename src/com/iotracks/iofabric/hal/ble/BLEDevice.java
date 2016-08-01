@@ -92,7 +92,7 @@ public class BLEDevice {
     }
 
     public void inactivate() {
-        //System.out.println("Inactivated");
+        System.out.println("Inactivated");
         advSignalsTimestamps = new CircularFifoQueue<>(5);
         bleStatus = BLEStatus.INACTIVE;
         avgAdvSignalInterval = 0L;
@@ -113,7 +113,7 @@ public class BLEDevice {
             }
             //System.out.println("avgAdvSignalInterval : " + avgAdvSignalInterval);
             bleStatus = BLEStatus.ACTIVE;
-            //System.out.println("!!! Verified !!! ");
+            System.out.println("!!! Verified !!! + average signal interval updated");
         }
     }
 
