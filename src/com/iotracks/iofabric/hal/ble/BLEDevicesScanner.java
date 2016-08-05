@@ -26,7 +26,7 @@ public class BLEDevicesScanner implements Runnable {
                 Long currentTimestamp = System.currentTimeMillis();
                 if (currentTimestamp - lastTimestamp > 10) {
                     batchNumber ++;
-                    System.out.println(" ------------- NEW BATCH ------------------- " + batchNumber);
+                    //System.out.println(" ------------- NEW BATCH ------------------- " + batchNumber);
                 }
                 String[] tokens = s.split(" ");
                 if(tokens.length > 1 && tokens[0].matches(macAddressPattern)) {

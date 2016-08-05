@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.iotracks</groupId>
     <artifactId>iofabric-ble-rest-api</artifactId>
-    <version>1.0</version>
+    <version>1.0.1</version>
     <dependencies>
         <dependency>
             <groupId>io.netty</groupId>

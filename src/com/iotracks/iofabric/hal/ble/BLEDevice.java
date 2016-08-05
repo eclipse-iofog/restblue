@@ -59,12 +59,8 @@ public class BLEDevice {
         return batchNumber;
     }
 
-    public void setBatchNumber(Long batchNumber) {
-        this.batchNumber = batchNumber;
-    }
-
     public void outofscope() {
-        System.out.println(" -- NO SIGNAL -- " + macAddress);
+        //System.out.println(" -- NO SIGNAL -- " + macAddress);
         bleStatus = BLEStatus.NO_SIGNALS;
     }
 
