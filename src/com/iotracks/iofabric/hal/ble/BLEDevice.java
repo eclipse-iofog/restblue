@@ -1,10 +1,7 @@
 package com.iotracks.iofabric.hal.ble;
 
-import org.apache.commons.collections4.queue.CircularFifoQueue;
-
 import javax.json.Json;
 import javax.json.JsonObject;
-import java.util.*;
 
 /**
  * @author ilaryionava
@@ -18,30 +15,20 @@ public class BLEDevice {
 
     private String macAddress;
     private String name;
-
     private BLEStatus bleStatus;
+    private Long lastAdvSignal;
+    private Long batchNumber;
 
-    private Long avgAdvSignalInterval;
-    private Long maxAdvSignalInterval;
-
-    private Queue<Long> advSignalsTimestamps;
-
-    public BLEDevice(String macAddress, String name, Long advSignalTimestamp) {
+    public BLEDevice(String macAddress, String name, Long lastAdvSignal, Long batchNumber) {
         this.macAddress = macAddress;
         this.name = name;
-        bleStatus = BLEStatus.VERIFYING;
-        avgAdvSignalInterval = 0L;
-        maxAdvSignalInterval = 24*60*60*1000L;
-        advSignalsTimestamps = new CircularFifoQueue<>(5);
-        advSignalsTimestamps.add(advSignalTimestamp);
+        this.lastAdvSignal = lastAdvSignal;
+        this.batchNumber = batchNumber;
+        bleStatus = BLEStatus.PRESENT;
     }
 
     public String getMacAddress() {
         return macAddress;
-    }
-
-    public void setMacAddress(String macAddress) {
-        this.macAddress = macAddress;
     }
 
     public String getName() {
@@ -56,74 +43,29 @@ public class BLEDevice {
         return bleStatus;
     }
 
-    public void setBleStatus(BLEStatus bleStatus) {
-        this.bleStatus = bleStatus;
+    public Long getLastAdvSignal() {
+        return lastAdvSignal;
     }
 
-    public Long getAvgAdvSignalInterval() {
-        return avgAdvSignalInterval;
-    }
-
-    public void setAvgAdvSignalInterval(Long avgAdvSignalInterval) {
-        this.avgAdvSignalInterval = avgAdvSignalInterval;
-    }
-
-    public Long getMaxAdvSignalInterval() {
-        return maxAdvSignalInterval;
-    }
-
-    public void setMaxAdvSignalInterval(Long maxAdvSignalInterval) {
-        this.maxAdvSignalInterval = maxAdvSignalInterval;
-    }
-
-    public Queue<Long> getAdvSignalsTimestamps() {
-        return advSignalsTimestamps;
-    }
-
-    public void setAdvSignalsTimestamps(Queue<Long> advSignalsTimestamps) {
-        this.advSignalsTimestamps = advSignalsTimestamps;
-    }
-
-    public void addAdvSignalTimestamp(Long advSignalTimestamp) {
-        if(advSignalsTimestamps != null) {
-            advSignalsTimestamps.add(advSignalTimestamp);
-            verify();
+    public void updateDevice(Long lastAdvSignal, Long batchNumber) {
+        if(bleStatus == BLEStatus.NO_SIGNALS) {
+            bleStatus = BLEStatus.PRESENT;
         }
+        this.batchNumber = batchNumber;
+        this.lastAdvSignal = lastAdvSignal;
     }
 
-    public void inactivate() {
-        System.out.println("Inactivated");
-        advSignalsTimestamps = new CircularFifoQueue<>(5);
-        bleStatus = BLEStatus.INACTIVE;
-        avgAdvSignalInterval = 0L;
+    public Long getBatchNumber() {
+        return batchNumber;
     }
 
-    public void verify() {
-        if(advSignalsTimestamps != null && advSignalsTimestamps.size() == 5) {
-            List<Long> advSignalIntervals = new ArrayList<>(4);
-            List<Long> advSignalsTimestampsArray = new ArrayList<>(advSignalsTimestamps);
-            for(int i = 0; i + 1 < advSignalsTimestampsArray.size(); i++) {
-                advSignalIntervals.add(advSignalsTimestampsArray.get(i+1) - advSignalsTimestampsArray.get(i));
-            }
-            //System.out.println("advSignalsTimestamps : " + advSignalsTimestamps);
-            //System.out.println("advSignalIntervals : " + advSignalIntervals);
-            Long newAvgAdvSignalInterval = Collections.max(advSignalIntervals)*2;
-            if(newAvgAdvSignalInterval > 0L) {
-                avgAdvSignalInterval = newAvgAdvSignalInterval;
-            }
-            //System.out.println("avgAdvSignalInterval : " + avgAdvSignalInterval);
-            bleStatus = BLEStatus.ACTIVE;
-            System.out.println("!!! Verified !!! + average signal interval updated");
-        }
+    public void setBatchNumber(Long batchNumber) {
+        this.batchNumber = batchNumber;
     }
 
-    public Long getLastAdvSignal(){
-        Iterator<Long> intervalIterator = advSignalsTimestamps.iterator();
-        Long lastInterval = intervalIterator.next();
-        while(intervalIterator.hasNext()) {
-            lastInterval = intervalIterator.next();
-        }
-        return lastInterval;
+    public void outofscope() {
+        System.out.println(" -- NO SIGNAL -- " + macAddress);
+        bleStatus = BLEStatus.NO_SIGNALS;
     }
 
     public JsonObject toJson(){

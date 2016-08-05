@@ -19,17 +19,15 @@ public class BLEDevicesScanner implements Runnable {
         String s;
         try {
             Process p = Runtime.getRuntime().exec(cmdScanDevices);
+            Long lastTimestamp = System.currentTimeMillis();
+            Long batchNumber = 0L;
 
-            /*Scanner sInput = new Scanner(p.getInputStream());
-            Scanner sError = new Scanner(p.getErrorStream());*/
-            //BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()), 1);
-            //BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()), 1);
-            // read the output from the command
-            // read any errors from the attempted command
-
-            //System.out.println("CMD input:\n");
-            while ((s = readLine(p.getInputStream())/*sError.nextLine()*/) != null) {
-                Long timestamp = System.currentTimeMillis();
+            while ((s = BLEDevicesScanner.readLine(p.getInputStream())) != null) {
+                Long currentTimestamp = System.currentTimeMillis();
+                if (currentTimestamp - lastTimestamp > 10) {
+                    batchNumber ++;
+                    System.out.println(" ------------- NEW BATCH ------------------- " + batchNumber);
+                }
                 String[] tokens = s.split(" ");
                 if(tokens.length > 1 && tokens[0].matches(macAddressPattern)) {
                     String name;
@@ -42,11 +40,12 @@ public class BLEDevicesScanner implements Runnable {
                         }
                         name = nameBuilder.toString();
                     }
-                    BLEDevicesMapHolder.addDevice(tokens[0], name, timestamp);
+                    BLEDevicesMapHolder.addDevice(tokens[0], name, currentTimestamp, batchNumber);
+                    lastTimestamp = currentTimestamp;
                 }
             }
 
-            while ((s = readLine(p.getErrorStream())/*sError.nextLine()*/) != null) {
+            while ((s = readLine(p.getErrorStream())) != null) {
                 log.warning("CMD: Error running command line '" + cmdScanDevices + "' :\n " + s);
             }
         } catch (IOException e) {

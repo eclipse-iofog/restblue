@@ -14,42 +14,39 @@ public class BLEDevicesMapHolder {
 
     static Map<String, BLEDevice> bleDevices = Collections.synchronizedMap(new HashMap<>());
 
+    static Long batchNumber = 0L;
+
     private static final String DEVICES_LIST_NAME = "bledevices";
 
-    public static void addDevice(String macAddress, String name, Long timestamp) {
+    public static void addDevice(String macAddress, String name, Long timestamp, Long pBatchNumber) {
         synchronized (bleDevices) {
-            System.out.println("new command line device : \n macaddress - " + macAddress + ",\n name - " + name + ",\n timestamp - " + timestamp );
+            System.out.println("new command line device (advSignal) : --- macaddress --- " + macAddress + ", --- name --- " + name + ", --- timestamp --- " + timestamp  + ", --- batchNumber --- " + pBatchNumber );
+            batchNumber = pBatchNumber;
             if(bleDevices.containsKey(macAddress)) {
-                bleDevices.get(macAddress).addAdvSignalTimestamp(timestamp);
+                bleDevices.get(macAddress).updateDevice(timestamp, pBatchNumber);
                 if(!name.trim().equals("(unknown)")) {
                     bleDevices.get(macAddress).setName(name);
                 }
             } else {
-                bleDevices.put(macAddress, new BLEDevice(macAddress, name, timestamp));
+                bleDevices.put(macAddress, new BLEDevice(macAddress, name, timestamp, pBatchNumber));
             }
         }
     }
 
     public static void updateDevices() {
         synchronized (bleDevices) {
-            long currentTime = System.currentTimeMillis();
             Iterator<Map.Entry<String, BLEDevice>> iter = bleDevices.entrySet().iterator();
             while (iter.hasNext()) {
                 Map.Entry<String, BLEDevice> entry = iter.next();
                 BLEDevice device = entry.getValue();
-                long diff = currentTime - device.getLastAdvSignal() ;
-                System.out.println("checking mac - " + entry.getKey() + " time diff = " + diff +  " + avrgSignal = " + device.getAvgAdvSignalInterval());
+                System.out.println("checking mac - " + device.getMacAddress() + " , name = " + device.getName() + " , lastAdvSignal = " + device.getLastAdvSignal() + " , deviceBatchNumber = " + device.getBatchNumber() + " , mapBatchNumber = " + batchNumber);
                 switch (device.getBleStatus()){
-                    case ACTIVE:
-                        if( device.getAvgAdvSignalInterval() > 0L && diff > device.getAvgAdvSignalInterval() ) {
-                            System.out.println("inactivate device with mac - " + device.getMacAddress() + " and name - " + device.getName());
-                            device.inactivate();
+                    case PRESENT:
+                        if( device.getBatchNumber() < batchNumber) {
+                            device.outofscope();
                         }
-                    case INACTIVE:
-                        if( diff > device.getMaxAdvSignalInterval()) {
-                            System.out.println("removing device with mac - " + device.getMacAddress() + " and name - " + device.getName());
-                            iter.remove();
-                        }
+                    case NO_SIGNALS:
+                        //System.out.println("removing coming - " + device.getMacAddress() + " and name - " + device.getName());
                 }
             }
         }

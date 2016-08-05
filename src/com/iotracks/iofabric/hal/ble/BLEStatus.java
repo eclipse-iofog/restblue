@@ -6,8 +6,7 @@ package com.iotracks.iofabric.hal.ble;
  */
 public enum BLEStatus {
 
-    ACTIVE,
-    INACTIVE,
-    VERIFYING
+    PRESENT,
+    NO_SIGNALS
 
 }
