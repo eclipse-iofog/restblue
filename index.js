@@ -6,7 +6,6 @@ var http = require('http');
 var util = require('./util');
 
 const PORT = 10500;
-var deviceIdIterator = 1;
 
 var devices = {};
 
