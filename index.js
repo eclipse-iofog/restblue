@@ -47,6 +47,7 @@ function connectToDevice(device, response, onConnectCallback) {
         });
         device.on('disconnect', function() {
             util.sendErrorResponse(response, 'Info', 'Device with id = ' + device.id + ' disconnected. ');
+            //connectToDevice(device, response, onConnectCallback);
         });
     } else {
         util.sendNotFoundResponse(response, 'Device not found in memory.');
@@ -66,7 +67,6 @@ function getDeviceServices(device, response) {
         }
     } else {
         util.sendNotFoundResponse(response, 'Device not found in memory.');
-        //disconnectBLE(device);
     }
 }
 
@@ -75,14 +75,12 @@ function discoverDeviceServices(device, response, callback) {
     device.discoverServices(null, function(error, services) {
         if (error) {
             util.sendErrorResponse(response, 'Discover services for device uuid - ' + device.uuid, error);
-            //disconnectBLE(device);
         } else {
             console.log('discovered services for device uuid - ' + device.address);
             if(callback) {
                 callback(services);
             } else {
                 util.sendOkResponse(response, util.servicesToJSON(services));
-                //disconnectBLE(device);
             }
         }
     });
@@ -99,14 +97,12 @@ function discoverServiceCharacteristics(device, serviceId, response, callback) {
                 service.discoverCharacteristics(null, function (error, characteristics) {
                     if(error) {
                         util.sendErrorResponse(response, 'Discover characteristics for service uuid = ' + service.uuid, error);
-                        //disconnectBLE(device);
                     } else {
                         console.log(' discovered characteristics for service uuid - ' + service.uuid);
                         if(callback) {
                             callback(characteristics);
                         } else {
                             util.sendOkResponse(response, util.characteristicsToJSON(characteristics));
-                            //disconnectBLE(device);
                         }
                     }
                 });
@@ -115,7 +111,6 @@ function discoverServiceCharacteristics(device, serviceId, response, callback) {
         }
         if (!foundService) {
             util.sendNotFoundResponse(response, 'Service with uuid = ' + serviceId + ' not found.');
-            //disconnectBLE(device);
         }
     });
 }
@@ -150,7 +145,6 @@ function characteristicEvent(device, serviceId, characteristicId, response, call
         }
         if (!foundCharacteristic) {
             util.sendNotFoundResponse(response, 'Characteristic with id = ' + characteristicId + ' not found.');
-            //disconnectBLE(device);
         }
     });
 }
@@ -163,12 +157,11 @@ function readCharacteristicEvent(device, serviceId, characteristicId, response) 
             } else {
                 console.log('Success reading data from characteristic id = ' + characteristic.uuid);
                 try {
-                    util.sendResponse(response, 200, JSON.stringify({ 'data' : data.toString('base64')}));
+                    util.sendResponse(response, 200, JSON.stringify({ 'data' : data.toString('hex')}));
                 } catch (error) {
                     util.sendErrorResponse(response, 'Error transforming data to base64 of characteristic with id = ' + characteristic.uuid, error);
                 }
             }
-            //disconnectBLE(device);
         });
     });
 }
@@ -190,15 +183,12 @@ function writeCharacteristicEvent(device, serviceId, characteristicId, response,
                             console.log('Success writing data to characteristic id = ' + characteristic.uuid);
                             util.sendOkResponse(response, 'Success writing data to characteristic id = ' + characteristic.uuid);
                         }
-                        //disconnectBLE(device);
                     });
                 } else {
                     util.sendErrorResponse(response, 'Error writing data to characteristic id = ' + characteristic.uuid, 'No data provided.');
-                    //disconnectBLE(device);
                 }
             } catch (error) {
                 util.sendErrorResponse(response, 'Error parsing request body to write to characteristic with id = ' + characteristic.uuid, error);
-                //disconnectBLE(device);
             }
         });
     });
@@ -218,16 +208,6 @@ function writeCharacteristic(device, serviceId, characteristicId, response, requ
     }
 }
 
-function disconnectBLE(device) {
-    device.disconnect(function(error) {
-        if(error) {
-            console.log('Error disconnecting from device id = ' + device.id, error);
-        } else {
-            console.log('Disconnected from device with id = ' + device.id);
-        }
-    });
-}
-
 function readCharacteristic(device, serviceId, characteristicId, response){
     if(device) {
         if( device.state == 'connected' ) {
@@ -239,7 +219,6 @@ function readCharacteristic(device, serviceId, characteristicId, response){
         }
     } else {
         util.sendNotFoundResponse(response, 'Device not found in memory.');
-        //disconnectBLE(device);
     }
 }
 
@@ -258,7 +237,7 @@ var server = http.createServer(
             }
         } else if ( url.indexOf('/characteristics') > -1 && urlTokens.length == 7 ) {
             var result = util.getDeviceByUrl(devices, url, urlTokens);
-            var serviceId = urlTokens[4];
+            var serviceId = urlTokens[5];
             if ( result.device ) {
                 getServiceCharacteristics(result.device, serviceId, response);
             } else {
@@ -266,8 +245,8 @@ var server = http.createServer(
             }
         } else if (url.indexOf('/characteristic') > -1 && urlTokens.length == 8) {
             var result = util.getDeviceByUrl(devices, url, urlTokens);
-            var serviceId = urlTokens[4];
-            var characteristicId = urlTokens[6];
+            var serviceId = urlTokens[5];
+            var characteristicId = urlTokens[7];
             if ( result.device ) {
                 if(request.method == 'POST') {
                     writeCharacteristic(result.device, serviceId, characteristicId, response, request);
