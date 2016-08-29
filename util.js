@@ -60,6 +60,18 @@ exports.characteristicsToJSON = function characteristicsToJSON(characteristics) 
     return characteristicsResponse;
 };
 
+exports.descriptorsToJSON = function descriptorsToJSON(descriptors) {
+    var descriptorsResponse = [];
+    for (var j in descriptors) {
+        descriptorsResponse.push({
+            'uuid': descriptors[j].uuid,
+            'name': descriptors[j].name,
+            'type': descriptors[j].type
+        });
+    }
+    return descriptorsResponse;
+};
+
 /*
 Util methods to send different responses.
  */

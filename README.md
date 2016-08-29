@@ -24,25 +24,57 @@ http://localhost:10500/device/iid/{dID}/service/{sID}/characteristics
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristics
 </pre>
-#### Read the value for specified characteristic cID, service sID and device dID (GET)
+#### Read the value from specified characteristic cID, service sID and device dID (GET)
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 </pre>
-#### Read the value for specified characteristic cID, service sID and device Mac Address (GET)
+#### Read the value from specified characteristic cID, service sID and device Mac Address (GET)
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
-#### Write value for specified characteristic cID, service sID and device dID (POST)
+#### Write value to specified characteristic cID, service sID and device dID (POST)
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 </pre>
 ###### POST parameters
 <pre>
-{ "data" : "base64 encoded data" }
+{ "data" : "base64 encoded data" , "withresponse" : true }
 </pre>
-#### Write value for specified characteristic cID, service sID and device Mac Address (POST)
+#### Write value to specified characteristic cID, service sID and device Mac Address (POST)
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
+</pre>
+###### POST parameters
+<pre>
+{ "data" : "base64 encoded data" , "withresponse" : true }
+</pre>
+#### Get list of descriptors for specified characteristic cID, service sID and device dID (GET)
+<pre>
+http://localhost:10500/device/id/{dID}/service/{sID}/characteristic/{cID}/descriptors
+</pre>
+#### Get list of descriptors for specified characteristic cID, service sID and device Mac Address (GET)
+<pre>
+http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptors
+</pre>
+#### Read the value from specified descriptor dsID, characteristic cID, service sID and device dID (GET)
+<pre>
+http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
+</pre>
+#### Read the value from specified descriptor dsID, characteristic cID, service sID and device Mac Address (GET)
+<pre>
+http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
+</pre>
+#### Write value to specified descriptor dsID, characteristic cID, service sID and device dID (POST)
+<pre>
+http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
+</pre>
+###### POST parameters
+<pre>
+{ "data" : "base64 encoded data" }
+</pre>
+#### Write value to specified descriptor dsID, characteristic cID, service sID and device Mac Address (POST)
+<pre>
+http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
 ###### POST parameters
 <pre>
