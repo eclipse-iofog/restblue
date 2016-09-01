@@ -286,7 +286,7 @@ var server = http.createServer(
         } else if ( url.indexOf('/services') > -1 && urlTokens.length == 5 ) {
             var result = util.getDeviceByUrl(devices, url, urlTokens);
             if ( result.device ) {
-                console.log('Getting services for device with id = ' +  device.id);
+                console.log('Getting services for device with id = ' +  result.device.id);
                 checkDeviceStatus(result.device, response, function () {
                     discoverDeviceServices(result.device, response);
                 });
