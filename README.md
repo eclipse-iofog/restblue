@@ -37,6 +37,7 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 </pre>
 ###### POST parameters
+"withresponse" isn't required (in case it's omitted the dafault value will be false)
 <pre>
 { "data" : "base64 encoded data" , "withresponse" : true }
 </pre>
@@ -45,6 +46,7 @@ http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
 ###### POST parameters
+"withresponse" isn't required (in case it's omitted the dafault value will be false)
 <pre>
 { "data" : "base64 encoded data" , "withresponse" : true }
 </pre>
