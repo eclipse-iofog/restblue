@@ -4,6 +4,14 @@ Prerequisites:
 
 Container provides next REST endpoints :
 
+#### Send config for bluetooth-rest-api system container, the scanning will be restarted after receiving config and all previously saved devices will be added anew with new IDs
+<pre>
+http://localhost:10500/config
+</pre>
+###### POST parameters
+<pre>
+{ "deviceIdentifier" : "name/mac" }
+</pre>
 #### Get list of devices (GET)
 <pre>
 http://localhost:10500/devices

@@ -119,15 +119,33 @@ exports.getDeviceByUrl = function (devices, url, urlTokens) {
         }
     } else if (url.indexOf('mac') > -1) {
         errorMsg = 'No device found with mac = ' + identifier;
-        device = getDeviceByMacAddress(devices, identifier);
+        var result = findDeviceByProperty(devices, identifier, function(device){
+            return device.id.toLocaleLowerCase();
+        });
+        if(result) {
+            device = result.device;
+        }
     }
     return {'device' : device, 'errorMsg': errorMsg };
 }
 
-function getDeviceByMacAddress(devices, mac) {
+exports.findDeviceByName = function (devices, name) {
+    return findDeviceByProperty(devices, name, function(device){
+        return device.advertisement.localName;
+    });
+};
+
+exports.findDeviceByMac = function (devices, mac) {
+    return findDeviceByProperty(devices, mac, function(device){
+        return device.address.toLocaleLowerCase();
+    });
+};
+
+function findDeviceByProperty(devices, deviceProperty, getPropertyCb) {
     for (var iid in devices) {
-        if (mac.toLowerCase() == devices[iid].id.toLowerCase()) {
-            return devices[iid];
+        var property = getPropertyCb(devices[iid]);
+        if (property == deviceProperty) {
+            return { 'device' : devices[iid], 'id' : iid };
         }
     }
     return null;
