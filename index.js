@@ -2,6 +2,7 @@ console.log('STARTED container.');
 
 var noble = require('noble');
 var http = require('http');
+var url = require('url');
 
 var util = require('./util');
 
@@ -12,7 +13,8 @@ var timeoutResponseProcess;
 var currTime;
 var devices = {};
 var deviceIdentifier = null;
-
+var deviceScanId ;
+var deviceScanCallback ;
 
 noble.on('stateChange', function(state) {
     console.log('noble stateChanged');
@@ -40,6 +42,13 @@ noble.on('stopStart', function() {
 
 noble.on('discover', function(peripheral) {
     console.log('Found device with local name: ' + peripheral.advertisement.localName + ' ; address = ' + peripheral.address + ' ; id = ' + peripheral.id);
+    if(deviceScanId && deviceScanCallback) {
+        if (deviceScanId == peripheral.uuid) {
+            deviceScanCallback(peripheral);
+            deviceScanId = null;
+            deviceScanCallback = null;
+        }
+    }
     var generatedID;
     var result;
     if(deviceIdentifier) {
@@ -55,10 +64,6 @@ noble.on('discover', function(peripheral) {
         generatedID = util.generateID();
     }
     devices[generatedID] = peripheral;
-    /*peripheral.on('rssiUpdate', function(rssi){
-        console.log('rssi update for devie id = ' + peripheral.id);
-        devices[generatedID].rssi = rssi;
-    });*/
 });
 
 function connectToDevice(device, response, onConnectCallback) {
@@ -68,6 +73,7 @@ function connectToDevice(device, response, onConnectCallback) {
             clearTimeout(timeoutResponseProcess);
             if (error) {
                 util.sendErrorResponse(response, ' Connect to device id = ' + device.id, error);
+                device.disconnect();
             } else {
                 console.log('connected to device with id = ' + device.id);
                 if(onConnectCallback) {
@@ -76,9 +82,6 @@ function connectToDevice(device, response, onConnectCallback) {
                 }
             }
         });
-        /*device.updateRssi(function (error, rssi) {
-            console.log('Update RSSI for devie id = ' + device.id);
-        });*/
         device.on('disconnect', function() {
             clearTimeout(timeoutResponseProcess);
             util.sendErrorResponse(response, 'Info', 'Device with id = ' + device.id + ' disconnected. ');
@@ -344,13 +347,54 @@ function startTimeoutResponseProcess(response) {
     }, maxTimeout);
 }
 
+function restartScanning(){
+    devices = {};
+    noble.stopScanning();
+    noble.startScanning();
+}
+
+function executeMainAction(response, requestUrl, urlTokens, callbackAction) {
+    var urlParams = urlTokens[urlTokens.length - 1 ].split('?');
+    var result = util.getDeviceByUrl(devices, requestUrl, urlTokens);
+    var scan = false;
+    if (urlParams.length >= 2) {
+        if(url.parse(requestUrl, true).query.scan == 'true') {
+            scan = true;
+            deviceScanCallback = function(device) {
+                if (device) {
+                    checkDeviceStatus(device, response, callbackAction(device));
+                } else {
+                    util.sendNotFoundResponse(response, 'Device with uuid = ' + device.uuid + ' not found during new scanning');
+                }
+            };
+        }
+    }
+    if ( result.device ) {
+        if(scan) {
+            deviceScanId = result.device.uuid;
+            restartScanning();
+        } else {
+            console.log('Getting services for device with id = ' + result.device.id);
+            checkDeviceStatus(result.device, response, callbackAction(result.device));
+        }
+    } else {
+        if (scan && urlTokens[2] == 'mac') {
+            deviceScanId = urlTokens[3];
+            restartScanning();
+        } else {
+            clearTimeout(timeoutResponseProcess);
+            util.sendNotFoundResponse(response, result.errorMsg);
+        }
+    }
+}
 
 var server = http.createServer(
     function handleRequest(request, response) {
-        var url = request.url;
-        var urlTokens = url.split('/');
+        var requestUrl = request.url;
+        var urlTokens = requestUrl.split('/');
         startTimeoutResponseProcess(response);
-        if( url.indexOf('/config') > -1 && urlTokens.length == 2 ) {
+        if( requestUrl.indexOf('/config') > -1 && urlTokens.length == 2 ) {
+            clearTimeout(timeoutResponseProcess);
             var body = [];
             request.on('data', function(chunk) {
                 body.push(chunk);
@@ -359,11 +403,8 @@ var server = http.createServer(
                 try {
                     var jsonRequest = JSON.parse(body);
                     if(jsonRequest.deviceIdentifier) {
-                        clearTimeout(timeoutResponseProcess);
                         deviceIdentifier = jsonRequest.deviceIdentifier;
-                        devices = {};
-                        noble.stopScanning();
-                        noble.startScanning();
+                        restartScanning();
                         util.sendOkResponse(response, 'New config applied. Scanning restarted');
                     } else {
                         util.sendErrorResponse(response, 'No deviceIdentifier provided in json');
@@ -372,84 +413,56 @@ var server = http.createServer(
                     util.sendErrorResponse(response, 'Error parsing request body to apply config', error);
                 }
             });
-        } else if( url.indexOf('/devices') > -1 && urlTokens.length == 2 ) {
+        } else if (requestUrl.indexOf('/scan/restart') > -1 && urlTokens.length == 3) {
+            restartScanning();
+            util.sendOkResponse(response, 'Scanning restarted');
+        } else if( requestUrl.indexOf('/devices') > -1 && urlTokens.length == 2 ) {
             clearTimeout(timeoutResponseProcess);
             util.sendOkResponse(response, util.devicesToJSON(devices));
-        } else if ( url.indexOf('/services') > -1 && urlTokens.length == 5 ) {
-            var result = util.getDeviceByUrl(devices, url, urlTokens);
-            if ( result.device ) {
-                console.log('Getting services for device with id = ' +  result.device.id);
-                checkDeviceStatus(result.device, response, function () {
-                    discoverDeviceServices(result.device, response);
-                });
-            } else {
-                clearTimeout(timeoutResponseProcess);
-                util.sendNotFoundResponse(response, result.errorMsg);
-            }
-        } else if ( url.indexOf('/characteristics') > -1 && urlTokens.length == 7 ) {
-            var result = util.getDeviceByUrl(devices, url, urlTokens);
+        } else if ( requestUrl.indexOf('/services') > -1 && urlTokens.length == 5 ) {
+            executeMainAction(response, requestUrl, urlTokens, function(device) {
+                discoverDeviceServices(device, response);
+            });
+        } else if ( requestUrl.indexOf('/characteristics') > -1 && urlTokens.length == 7 ) {
             var serviceId = urlTokens[5];
-            if ( result.device ) {
-                checkDeviceStatus(result.device, response, function () {
-                    discoverServiceCharacteristics(result.device, serviceId, response);
-                });
-            } else {
-                clearTimeout(timeoutResponseProcess);
-                util.sendNotFoundResponse(response, result.errorMsg);
-            }
-        } else if (url.indexOf('/characteristic') > -1 && urlTokens.length == 8) {
-            var result = util.getDeviceByUrl(devices, url, urlTokens);
+            executeMainAction(response, requestUrl, urlTokens, function(device) {
+                discoverServiceCharacteristics(device, serviceId, response);
+            });
+        } else if (requestUrl.indexOf('/characteristic') > -1 && urlTokens.length == 8) {
             var serviceId = urlTokens[5];
             var characteristicId = urlTokens[7];
-            if ( result.device ) {
-                if(request.method == 'POST') {
-                    checkDeviceStatus(result.device, response, function () {
-                        writeCharacteristic(result.device, serviceId, characteristicId, response, request);
-                    });
-                } else {
-                    checkDeviceStatus(result.device, response, function () {
-                        readCharacteristic(result.device, serviceId, characteristicId, response);
-                    });
-                }
-            } else {
-                clearTimeout(timeoutResponseProcess);
-                util.sendNotFoundResponse(response, result.errorMsg);
-            }
-        } else if (url.indexOf('/descriptors') > -1 && urlTokens.length == 9) {
-            var result = util.getDeviceByUrl(devices, url, urlTokens);
-            var serviceId = urlTokens[5];
-            var characteristicId = urlTokens[7];
-            if ( result.device ) {
-                checkDeviceStatus(result.device, response, function () {
-                    discoverCharacteristicDescriptors(result.device, serviceId, characteristicId, response);
+            if(request.method == 'POST') {
+                executeMainAction(response, requestUrl, urlTokens, function(device) {
+                    writeCharacteristic(device, serviceId, characteristicId, response, request);
                 });
             } else {
-                clearTimeout(timeoutResponseProcess);
-                util.sendNotFoundResponse(response, result.errorMsg);
+                executeMainAction(response, requestUrl, urlTokens, function (device) {
+                    readCharacteristic(device, serviceId, characteristicId, response);
+                });
             }
-        } else if (url.indexOf('/descriptor') > -1 && urlTokens.length == 10) {
-            var result = util.getDeviceByUrl(devices, url, urlTokens);
+        } else if (requestUrl.indexOf('/descriptors') > -1 && urlTokens.length == 9) {
+            var serviceId = urlTokens[5];
+            var characteristicId = urlTokens[7];
+            executeMainAction(response, requestUrl, urlTokens, function(device) {
+                discoverCharacteristicDescriptors(device, serviceId, characteristicId, response);
+            });
+        } else if (requestUrl.indexOf('/descriptor') > -1 && urlTokens.length == 10) {
             var serviceId = urlTokens[5];
             var characteristicId = urlTokens[7];
             var descriptorId = urlTokens[9];
-            if ( result.device ) {
-                if(request.method == 'POST') {
-                    checkDeviceStatus(result.device, response, function () {
-                        writeDescriptor(result.device, serviceId, characteristicId, descriptorId, response, request);
-                    });
-                } else {
-                    checkDeviceStatus(result.device, response, function () {
-                        readDescriptor(result.device, serviceId, characteristicId, descriptorId, response);
-                    });
-                }
+            if(request.method == 'POST') {
+                executeMainAction(response, requestUrl, urlTokens, function(device) {
+                    writeDescriptor(device, serviceId, characteristicId, descriptorId, response, request);
+                });
             } else {
-                clearTimeout(timeoutResponseProcess);
-                util.sendNotFoundResponse(response, result.errorMsg);
+                executeMainAction(response, requestUrl, urlTokens, function(device) {
+                    readDescriptor(device, serviceId, characteristicId, descriptorId, response);
+                });
             }
         } else {
             clearTimeout(timeoutResponseProcess);
             response.writeHead(200, {'Content-Type' : 'application-json'});
-            response.end('This url is not supported : ' + url);
+            response.end('This requestUrl is not supported : ' + requestUrl);
         }
     }
 ).listen(PORT, function serverListening() {
