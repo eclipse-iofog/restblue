@@ -362,7 +362,9 @@ function executeMainAction(response, requestUrl, urlTokens, callbackAction) {
             scan = true;
             deviceScanCallback = function(device) {
                 if (device) {
-                    checkDeviceStatus(device, response, callbackAction(device));
+                    checkDeviceStatus(device, response, function() {
+                        callbackAction(device);
+                    });
                 } else {
                     util.sendNotFoundResponse(response, 'Device with uuid = ' + device.uuid + ' not found during new scanning');
                 }
@@ -375,7 +377,9 @@ function executeMainAction(response, requestUrl, urlTokens, callbackAction) {
             restartScanning();
         } else {
             console.log('Getting services for device with id = ' + result.device.id);
-            checkDeviceStatus(result.device, response, callbackAction(result.device));
+            checkDeviceStatus(result.device, response, function() {
+                callbackAction(result.device)
+            });
         }
     } else {
         if (scan && urlTokens[2] == 'mac') {
