@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "noble": "*",
-    "http": "*"
+    "http": "*",
+    "url": "*"
   }
 }
