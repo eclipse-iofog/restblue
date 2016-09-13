@@ -4,91 +4,75 @@ Prerequisites:
 
 Container provides next REST endpoints :
 
-#### 1. Send config for bluetooth-rest-api system container, the scanning will be restarted after receiving config and all previously saved devices will be added anew with new IDs
+#### Send config for bluetooth-rest-api system container, the scanning will be restarted after receiving config and all previously saved devices will be added anew with new IDs
 <pre>
-http://localhost:10500/config
+<b>1.</b> http://localhost:10500/config
 </pre>
 ###### POST JSON raw body
 <pre>
 { "deviceIdentifier" : "name/mac" }
 </pre>
-#### 2. Send restart scanning command
+#### Send restart scanning command
 <pre>
-http://localhost:10500/scan/restart
+<b>2.</b> http://localhost:10500/scan/restart
 </pre>
-#### 3. Get list of devices (GET)
+#### Get list of devices (GET)
 <pre>
-http://localhost:10500/devices
+<b>3.</b> http://localhost:10500/devices
 </pre>
-#### 4. Get list of services for specified device ID (GET)
+#### Get list of services for specified device ID/Mac Address (GET)
 <pre>
-http://localhost:10500/device/iid/{ID}/services
+ <b>4.</b> http://localhost:10500/device/iid/{ID}/services
 </pre>
-#### 5. Get list of services for specified device Mac Address (GET)
 <pre>
-http://localhost:10500/device/mac/{mac}/services
+<b>5.</b> http://localhost:10500/device/mac/{mac}/services
 </pre>
-#### 6. Get list of characteristics for specified service sID and device dID (GET)
+#### Get list of characteristics for specified service sID and device dID/Mac Address (GET)
 <pre>
-http://localhost:10500/device/iid/{dID}/service/{sID}/characteristics
+<b>6.</b> http://localhost:10500/device/iid/{dID}/service/{sID}/characteristics
 </pre>
-#### 7. Get list of characteristics for specified service sID and device Mac Address (GET)
 <pre>
-http://localhost:10500/device/mac/{mac}/service/{sID}/characteristics
+<b>7.</b> http://localhost:10500/device/mac/{mac}/service/{sID}/characteristics
 </pre>
-#### 8. Read the value from specified characteristic cID, service sID and device dID (GET)
+#### Read the value from specified characteristic cID, service sID and device dID/Mac Address (GET)
 <pre>
-http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
+<b>8.</b> http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 </pre>
-#### 9. Read the value from specified characteristic cID, service sID and device Mac Address (GET)
 <pre>
-http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
+<b>9.</b> http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
-#### 10. Write value to specified characteristic cID, service sID and device dID (POST)
+#### Write value to specified characteristic cID, service sID and device dID/Mac Address (POST)
 <pre>
-http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
+<b>10.</b> http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
+<pre>
+<b>11.</b> http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
-###### POST JSON raw body
-"withresponse" isn't required (in case it's omitted the dafault value will be false)
-<pre>
-{ "data" : "base64 encoded data" , "withresponse" : true }
-</pre>
-#### 11. Write value to specified characteristic cID, service sID and device Mac Address (POST)
-<pre>
-http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
 ###### POST JSON raw body
 "withresponse" isn't required (in case it's omitted the dafault value will be false)
 <pre>
 { "data" : "base64 encoded data" , "withresponse" : true }
 </pre>
-#### 12. Get list of descriptors for specified characteristic cID, service sID and device dID (GET)
+#### Get list of descriptors for specified characteristic cID, service sID and device dID/Mac Address (GET)
 <pre>
-http://localhost:10500/device/id/{dID}/service/{sID}/characteristic/{cID}/descriptors
+<b>12.</b> http://localhost:10500/device/id/{dID}/service/{sID}/characteristic/{cID}/descriptors
 </pre>
-#### 13. Get list of descriptors for specified characteristic cID, service sID and device Mac Address (GET)
 <pre>
-http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptors
+<b>13.</b> http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptors
 </pre>
-#### 14. Read the value from specified descriptor dsID, characteristic cID, service sID and device dID (GET)
+#### Read the value from specified descriptor dsID, characteristic cID, service sID and device dID/Mac Address (GET)
 <pre>
-http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
+<b>14.</b> http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
-#### 15. Read the value from specified descriptor dsID, characteristic cID, service sID and device Mac Address (GET)
 <pre>
-http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
+<b>15.</b> http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
-#### 16. Write value to specified descriptor dsID, characteristic cID, service sID and device dID (POST)
+#### Write value to specified descriptor dsID, characteristic cID, service sID and device dID/Mac Address (POST)
 <pre>
-http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
+<b>16.</b> http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
-###### POST JSON raw body
 <pre>
-{ "data" : "base64 encoded data" }
-</pre>
-#### 17. Write value to specified descriptor dsID, characteristic cID, service sID and device Mac Address (POST)
-<pre>
-http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
+<b>17.</b> http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
 ###### POST JSON raw body
 <pre>
