@@ -186,8 +186,7 @@ function readCharacteristic(device, serviceId, characteristicId, response) {
             } else {
                 console.log('Success reading data from characteristic id = ' + characteristic.uuid);
                 try {
-                    // TODO : decide how to return data
-                    util.sendResponse(response, 200, JSON.stringify({ 'data' : data.toString('hex')}));
+                    util.sendResponse(response, 200, JSON.stringify({ 'data' : data.toString('base64')}));
                 } catch (error) {
                     util.sendErrorResponse(response, 'Error transforming data to base64 of characteristic with id = ' + characteristic.uuid, error);
                 }
@@ -210,7 +209,7 @@ function writeCharacteristic(device, serviceId, characteristicId, response, requ
                     if(jsonRequest.withresponse) {
                         withResponse = true;
                     }
-                    characteristic.write(new Buffer(jsonRequest.data), withResponse, function(error) {
+                    characteristic.write(new Buffer(jsonRequest.data, 'base64'), withResponse, function(error) {
                         clearTimeout(timeoutResponseProcess);
                         if(error) {
                             util.sendErrorResponse(response, 'Error writing data to characteristic id = ' + characteristic.uuid, error);
@@ -272,8 +271,7 @@ function readDescriptor(device, serviceId, characteristicId, descriptorId, respo
             } else {
                 console.log('Success reading data from descriptor id = ' + descriptor.uuid);
                 try {
-                    // TODO : decide how to return data
-                    util.sendResponse(response, 200, JSON.stringify({ 'data' : data.toString()}));
+                    util.sendResponse(response, 200, JSON.stringify({ 'data' : data.toString('base64')}));
                 } catch (error) {
                     util.sendErrorResponse(response, 'Error transforming data to base64 of descriptor with id = ' + descriptor.uuid, error);
                 }
@@ -293,7 +291,7 @@ function writeDescriptor(device, serviceId, characteristicId, descriptorId, resp
             try {
                 var jsonRequest = JSON.parse(body);
                 if(jsonRequest.data) {
-                    descriptor.writeValue(new Buffer(jsonRequest.data), function(error) {
+                    descriptor.writeValue(new Buffer(jsonRequest.data, 'base64'), function(error) {
                         clearTimeout(timeoutResponseProcess);
                         if(error) {
                             util.sendErrorResponse(response, 'Error writing data to descriptor id = ' + descriptor.uuid, error);
@@ -454,19 +452,19 @@ var server = http.createServer(
             var serviceId = urlTokens[5];
             var characteristicId = urlTokens[7];
             var descriptorId = urlTokens[9];
-            if(request.method == 'POST') {
-                executeMainAction(response, requestUrl, urlTokens, function(device) {
-                    writeDescriptor(device, serviceId, characteristicId, descriptorId, response, request);
-                });
-            } else {
+            if(request.method == 'GET') {
                 executeMainAction(response, requestUrl, urlTokens, function(device) {
                     readDescriptor(device, serviceId, characteristicId, descriptorId, response);
                 });
-            }
+            } /*else {
+                executeMainAction(response, requestUrl, urlTokens, function(device) {
+                    writeDescriptor(device, serviceId, characteristicId, descriptorId, response, request);
+                });
+            }*/
         } else {
             clearTimeout(timeoutResponseProcess);
             response.writeHead(200, {'Content-Type' : 'application-json'});
-            response.end('This requestUrl is not supported : ' + requestUrl);
+            response.end(JSON.stringify('This requestUrl is not supported : ' + requestUrl));
         }
     }
 ).listen(PORT, function serverListening() {
