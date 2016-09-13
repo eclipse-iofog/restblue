@@ -1,6 +1,13 @@
 # bluetooth-rest-api
 Prerequisites:
-- container needs to be run with 2 options: --net=host --privileged
+- container needs to be run with 2 options to grant access: --net=host --privileged
+
+Upon startup the container will start scanning if bluetooth is powered on and upon discovering devices it will store them locally and generate an internal ID. In most cases the cantainer will work with this locally stored devices unless the scanning is restarted. If contrainer received command to restart scanning it will delete all previously stored devices and start scanning anew ( which results in genereting new local IDs for devices).
+Container will return 'Timeout exception' in case if it didn't get any reaults of processing. 
+> For example, if you try to hit http://localhost:10500/device/mac/{mac}/services?scan=true endpoint you can get 'Timeout exception' for next reasons:
+> 1. device with specified mac was't found while scanning anew
+> 2. device is inactive and container hang up on trying to connect to it
+> 3. after connecting to device container hang up on descovering services
 
 Container provides next REST endpoints :
 
@@ -22,7 +29,7 @@ Container provides next REST endpoints :
 </pre>
 #### Get list of services for specified device ID/Mac Address (GET)
 <pre>
- <b>4.</b> http://localhost:10500/device/iid/{ID}/services
+<b>4.</b> http://localhost:10500/device/iid/{ID}/services
 </pre>
 <pre>
 <b>5.</b> http://localhost:10500/device/mac/{mac}/services
@@ -44,9 +51,9 @@ Container provides next REST endpoints :
 #### Write value to specified characteristic cID, service sID and device dID/Mac Address (POST)
 <pre>
 <b>10.</b> http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
+</pre>
 <pre>
 <b>11.</b> http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
-</pre>
 </pre>
 ###### POST JSON raw body
 "withresponse" isn't required (in case it's omitted the dafault value will be false)
