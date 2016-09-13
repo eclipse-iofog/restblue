@@ -12,7 +12,7 @@ Container will return 'Timeout exception' in case if it didn't get any reaults o
 Container provides next REST endpoints :
 
 #### Set config (POST)
-This endpoit provides the possibility to set config for bluetooth-rest-api system container, upon receiving config container will wipe out all previously stored devices and restart scanning.
+This endpoit provides the possibility to set config for bluetooth-rest-api system container, upon receiving config container will wipe out all previously stored devices and restart scanning. 'name' - will tell container differentiate devices' uniqueness by localname, 'mac' - will tell container differentiate devices' uniqueness by mac address
 ###### Endpoit 1
 <pre>
 http://localhost:10500/config
