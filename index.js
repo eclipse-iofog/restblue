@@ -448,15 +448,15 @@ var server = http.createServer(
             executeMainAction(response, requestUrl, urlTokens, function(device) {
                 discoverCharacteristicDescriptors(device, serviceId, characteristicId, response);
             });
-        } else if (requestUrl.indexOf('/descriptor') > -1 && urlTokens.length == 10) {
+        } else if (requestUrl.indexOf('/descriptor') > -1 && urlTokens.length == 10 && request.method == 'GET') {
             var serviceId = urlTokens[5];
             var characteristicId = urlTokens[7];
             var descriptorId = urlTokens[9];
-            if(request.method == 'GET') {
+            /*if(request.method == 'GET') {*/
                 executeMainAction(response, requestUrl, urlTokens, function(device) {
                     readDescriptor(device, serviceId, characteristicId, descriptorId, response);
                 });
-            } /*else {
+            /*} else {
                 executeMainAction(response, requestUrl, urlTokens, function(device) {
                     writeDescriptor(device, serviceId, characteristicId, descriptorId, response, request);
                 });
