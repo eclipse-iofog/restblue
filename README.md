@@ -13,7 +13,7 @@ Container provides next REST endpoints :
 
 #### Set config (POST)
 This endpoint provides the possibility to set config for bluetooth-rest-api system container, upon receiving config container will wipe out all previously stored devices and restart scanning. 'name' - will tell container differentiate devices' uniqueness by localname, 'mac' - will tell container differentiate devices' uniqueness by mac address
-###### endpoint 1
+###### Endpoint 1
 <pre>
 http://localhost:10500/config
 </pre>
@@ -61,7 +61,7 @@ http://localhost:10500/devices
 </pre>
 #### Get list of services (GET)
 This endpoint returns a list of services discovered for specified device ID/Mac Address.
-###### endpoint 4
+###### Endpoint 4
 <pre>
 http://localhost:10500/device/iid/{ID}/services
 </pre>
@@ -116,11 +116,11 @@ http://localhost:10500/device/mac/{mac}/services
 </pre>
 #### Get list of characteristics (GET)
 This endpoint returns the list of discovered characteristics for specified service sID and device dID/Mac Address
-###### endpoint 6
+###### Endpoint 6
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristics
 </pre>
-###### endpoint 7
+###### Endpoint 7
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristics
 </pre>
@@ -155,11 +155,11 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristics
 </pre>
 #### Read characteristic's value (GET)
 This endpoint reads the value from specified characteristic cID for specified service sID and device dID/Mac Address
-###### endpoint 8
+###### Endpoint 8
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 </pre>
-###### endpoint 9
+###### Endpoint 9
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
@@ -171,11 +171,11 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
 #### Write value to characteristic (POST)
 This endpoint writes value to specified characteristic cID for specified service sID and device dID/Mac Address
-###### endpoint 10
+###### Endpoint 10
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 </pre>
-###### endpoint 11
+###### Endpoint 11
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
@@ -190,11 +190,11 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
 #### Get list of descriptors (GET)
 This endpoint returns a list of discovered descriptors for specified characteristic cID, service sID and device dID/Mac Address
-###### endpoint 12
+###### Endpoint 12
 <pre>
 http://localhost:10500/device/id/{dID}/service/{sID}/characteristic/{cID}/descriptors
 </pre>
-###### endpoint 13
+###### Endpoint 13
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptors
 </pre>
@@ -215,11 +215,11 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descr
 </pre>
 #### Read the value from descriptor (GET)
 This endpoint reads the value from specified descriptor dsID for specified characteristic cID, service sID and device dID/Mac Address
-###### endpoint 14
+###### Endpoint 14
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
-###### endpoint 15
+###### Endpoint 15
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
@@ -230,5 +230,5 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descr
 }
 </pre>
 
-For REST calls specified under number 4-17 all the operations will be performed with previously stored devices (the scanning starts upon container's start). If to the url add parameter : ?scan=true, the device will be scanned anew.
-For REST calls specified under numbers 5, 7, 9, 11, 13, 15, 17 (basically the ones with mac parameter to specify device) if add scan=true parameter to url, new device can be searched.
+For Endpoints number 4-17 all the operations will be performed with previously stored devices (the scanning starts upon container's start). If to the url add parameter : ?scan=true, the device will be scanned anew.
+For Endpoints numbers 5, 7, 9, 11, 13, 15, 17 (basically the ones with mac parameter to specify device) if add scan=true parameter to url, new device can be searched.
