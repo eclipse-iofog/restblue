@@ -11,11 +11,11 @@ Container will return 'Timeout exception' in case if it didn't get any results o
 
 Container provides next REST endpoints :
 
-#### Set config (POST)
+#### Set Device Identifier (POST)
 This endpoint provides the possibility to set config for bluetooth-rest-api system container, upon receiving config container will wipe out all previously stored devices and restart scanning. 'name' - will tell container differentiate devices' uniqueness by localname, 'mac' - will tell container differentiate devices' uniqueness by mac address
 ###### Endpoint 1
 <pre>
-http://localhost:10500/config
+http://localhost:10500/config/scan
 </pre>
 ###### POST JSON raw body
 <pre>
@@ -25,9 +25,23 @@ http://localhost:10500/config
 <pre>
 "New config applied. Scanning restarted"
 </pre>
+#### Turn ON/OFF level of logging (POST)
+This endpoint provides the possibility to turn ON/OFF DEBUG level logging
+###### Endpoint 2
+<pre>
+http://localhost:10500/config/logging
+</pre>
+###### POST JSON raw body
+<pre>
+{ "LOG_LEVEL" : "DEBUG" }
+</pre>
+###### Response
+<pre>
+"LOG_LEVEL = LOG_LEVEL_VALUE is applied"
+</pre>
 #### Restart scanning
 This endpoint sends the command to restart scanning to a container. As a result all previously stored devices will be wiped out and then the scanning will be restarted. 
-###### Endpoint 2
+###### Endpoint 3
 <pre>
 http://localhost:10500/scan/restart
 </pre>
@@ -37,7 +51,7 @@ http://localhost:10500/scan/restart
 </pre>
 #### Get list of devices (GET)
 This endpoint returns a list of discovered devices till current moment.
-###### Endpoint 3
+###### Endpoint 4
 <pre>
 http://localhost:10500/devices
 </pre>
@@ -61,11 +75,11 @@ http://localhost:10500/devices
 </pre>
 #### Get list of services (GET)
 This endpoint returns a list of services discovered for specified device ID/Mac Address.
-###### Endpoint 4
+###### Endpoint 5
 <pre>
 http://localhost:10500/device/iid/{ID}/services
 </pre>
-###### endpoint 5
+###### Endpoint 6
 <pre>
 http://localhost:10500/device/mac/{mac}/services
 </pre>
@@ -116,11 +130,11 @@ http://localhost:10500/device/mac/{mac}/services
 </pre>
 #### Get list of characteristics (GET)
 This endpoint returns the list of discovered characteristics for specified service sID and device dID/Mac Address
-###### Endpoint 6
+###### Endpoint 7
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristics
 </pre>
-###### Endpoint 7
+###### Endpoint 8
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristics
 </pre>
@@ -155,11 +169,11 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristics
 </pre>
 #### Read characteristic's value (GET)
 This endpoint reads the value from specified characteristic cID for specified service sID and device dID/Mac Address
-###### Endpoint 8
+###### Endpoint 9
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 </pre>
-###### Endpoint 9
+###### Endpoint 10
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
@@ -171,11 +185,11 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
 #### Write value to characteristic (POST)
 This endpoint writes value to specified characteristic cID for specified service sID and device dID/Mac Address
-###### Endpoint 10
+###### Endpoint 11
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}
 </pre>
-###### Endpoint 11
+###### Endpoint 12
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
@@ -190,11 +204,11 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}
 </pre>
 #### Get list of descriptors (GET)
 This endpoint returns a list of discovered descriptors for specified characteristic cID, service sID and device dID/Mac Address
-###### Endpoint 12
+###### Endpoint 13
 <pre>
 http://localhost:10500/device/id/{dID}/service/{sID}/characteristic/{cID}/descriptors
 </pre>
-###### Endpoint 13
+###### Endpoint 14
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptors
 </pre>
@@ -215,11 +229,11 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descr
 </pre>
 #### Read the value from descriptor (GET)
 This endpoint reads the value from specified descriptor dsID for specified characteristic cID, service sID and device dID/Mac Address
-###### Endpoint 14
+###### Endpoint 15
 <pre>
 http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
-###### Endpoint 15
+###### Endpoint 16
 <pre>
 http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descriptor/{dsID}
 </pre>
@@ -230,5 +244,5 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descr
 }
 </pre>
 
-For Endpoints number 4-17 all the operations will be performed with previously stored devices (the scanning starts upon container's start). If to the url add parameter : ?scan=true, the device will be scanned anew.
-For Endpoints numbers 5, 7, 9, 11, 13, 15, 17 (basically the ones with mac parameter to specify device) if add scan=true parameter to url, new device can be searched.
+For Endpoints number 5-16 all the operations will be performed with previously stored devices (the scanning starts upon container's start). If to the url add parameter : ?scan=true, the device will be scanned anew.
+For Endpoints numbers 6, 8, 10, 12, 14, 16 (basically the ones with mac parameter to specify device) if add scan=true parameter to url, new device can be searched.

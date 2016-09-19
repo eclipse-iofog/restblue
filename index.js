@@ -453,7 +453,7 @@ var server = http.createServer(
         var requestUrl = request.url;
         var urlTokens = requestUrl.split('/');
         startTimeoutResponseProcess(response);
-        if( requestUrl.indexOf('/config') > -1 && urlTokens.length == 2 ) {
+        if( requestUrl.indexOf('/config/scan') > -1 && urlTokens.length == 3 ) {
             clearTimeout(timeoutResponseProcess);
             processPostRequest(request, response, function(jsonRequestBody) {
                 if(jsonRequestBody.deviceIdentifier) {
@@ -464,7 +464,7 @@ var server = http.createServer(
                     util.sendErrorResponse(response, 'No deviceIdentifier provided in json');
                 }
             });
-        } else if ( requestUrl.indexOf('/logging') > -1 && urlTokens.length == 2 && request.method == 'POST' ) {
+        } else if ( requestUrl.indexOf('/config/logging') > -1 && urlTokens.length == 3 && request.method == 'POST' ) {
             clearTimeout(timeoutResponseProcess);
             processPostRequest(request, response, function(jsonRequestBody) {
                 if(jsonRequestBody.LOG_LEVEL) {
