@@ -1,5 +1,3 @@
-console.log('STARTED container.');
-
 var noble = require('noble');
 var http = require('http');
 var url = require('url');
@@ -9,6 +7,7 @@ var util = require('./util');
 const PORT = 10500;
 const maxTimeout = 32 * 1000; // 32 sec
 
+var LOG_LEVEL/* = 'DEBUG'*/;
 var timeoutResponseProcess;
 var currTime;
 var devices = {};
@@ -17,33 +16,47 @@ var deviceScanId ;
 var deviceScanCallback ;
 
 noble.on('stateChange', function(state) {
-    console.log('noble stateChanged');
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Bluetooth adapter state changed to ');
+    }
     if (state === 'poweredOn') {
-        console.log('noble powerOn');
+        if( LOG_LEVEL == 'DEBUG') {
+            console.log('powerOn');
+        }
         noble.startScanning(null, false, function(error){
             if(error) {
-                console.error('There was an error with start scanning: ', error);
+                // console.error('There was an error with starting the scan: ', error);
             } else {
-                console.log('Scanning started successfully.');
+                if( LOG_LEVEL == 'DEBUG') {
+                    console.log('Scanning started successfully.');
+                }
             }
         });
     } else {
-        console.log('noble NOT powerOn');
+        if( LOG_LEVEL == 'DEBUG') {
+            console.log(state);
+        }
         noble.stopScanning();
     }
 });
 
 noble.on('scanStart', function() {
-    console.log('Scanning STARTed.');
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Scanning STARTED.');
+    }
 });
 noble.on('stopStart', function() {
-    console.log('Scanning STOPed.');
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Scanning STOPPED.');
+    }
 });
 
 noble.on('discover', function(peripheral) {
-    console.log('Found device with local name: ' + peripheral.advertisement.localName + ' ; address = ' + peripheral.address + ' ; id = ' + peripheral.id);
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Found device with local name: ' + peripheral.advertisement.localName + ' ; address = ' + peripheral.address + ' ; mac-id = ' + peripheral.id);
+    }
     if(deviceScanId && deviceScanCallback) {
-        if (deviceScanId == peripheral.uuid) {
+        if (deviceScanId == peripheral.id) {
             deviceScanCallback(peripheral);
             deviceScanId = null;
             deviceScanCallback = null;
@@ -67,15 +80,19 @@ noble.on('discover', function(peripheral) {
 });
 
 function connectToDevice(device, response, onConnectCallback) {
-    console.log('Connecting to device with id = ' +  device.id);
-    if(device) {
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Connecting to device with mac-id = ' +  device.id);
+    }
+    if( device ) {
         device.connect(function(error) {
             clearTimeout(timeoutResponseProcess);
             if (error) {
-                util.sendErrorResponse(response, ' Connect to device id = ' + device.id, error);
+                util.sendErrorResponse(response, ' Connect to device mac-id = ' + device.id, error);
                 device.disconnect();
             } else {
-                console.log('connected to device with id = ' + device.id);
+                if( LOG_LEVEL == 'DEBUG') {
+                    console.log('SUCCESS: Connected to device with mac-id = ' + device.id);
+                }
                 if(onConnectCallback) {
                     startTimeoutResponseProcess(response);
                     onConnectCallback();
@@ -84,7 +101,7 @@ function connectToDevice(device, response, onConnectCallback) {
         });
         device.on('disconnect', function() {
             clearTimeout(timeoutResponseProcess);
-            util.sendErrorResponse(response, 'Info', 'Device with id = ' + device.id + ' disconnected. ');
+            util.sendErrorResponse(response, 'Device with mac-id = ' + device.id + ' disconnected. ');
         });
     } else {
         clearTimeout(timeoutResponseProcess);
@@ -95,7 +112,9 @@ function connectToDevice(device, response, onConnectCallback) {
 function checkDeviceStatus(device, response, mainCallback) {
     if(device) {
         if( device.state == 'connected' ) {
-            console.log('device is already connected');
+            if( LOG_LEVEL == 'DEBUG') {
+                console.log('Device mac-id = ' + device.id +  ' is already connected');
+            }
             mainCallback();
         } else {
             connectToDevice(device, response, function afterConnectCallback() {
@@ -109,13 +128,17 @@ function checkDeviceStatus(device, response, mainCallback) {
 }
 
 function discoverDeviceServices(device, response, callback) {
-    console.log('Discovering services for device with id = ' +  device.id);
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Discovering services for device with mac-id = ' +  device.id);
+    }
     device.discoverServices(null, function(error, services) {
         clearTimeout(timeoutResponseProcess);
         if (error) {
-            util.sendErrorResponse(response, 'Discover services for device uuid - ' + device.uuid, error);
+            util.sendErrorResponse(response, 'Discover services for device mac-id = ' + device.id, error);
         } else {
-            console.log('discovered services for device uuid - ' + device.address);
+            if( LOG_LEVEL == 'DEBUG') {
+                console.log('SUCCESS: Discovered services for device mac-id = ' + device.id);
+            }
             if(callback) {
                 startTimeoutResponseProcess(response);
                 callback(services);
@@ -127,7 +150,9 @@ function discoverDeviceServices(device, response, callback) {
 }
 
 function discoverServiceCharacteristics(device, serviceId, response, callback) {
-    console.log('Discovering service characteristics for device with id = ' +  device.id);
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Discovering service characteristics for device with mac-id = ' +  device.id);
+    }
     discoverDeviceServices(device, response, function characteristicsCallback(services){
         var foundService = false;
         for (var i in services) {
@@ -139,7 +164,9 @@ function discoverServiceCharacteristics(device, serviceId, response, callback) {
                     if(error) {
                         util.sendErrorResponse(response, 'Discover characteristics for service uuid = ' + service.uuid, error);
                     } else {
-                        console.log(' discovered characteristics for service uuid - ' + service.uuid);
+                        if( LOG_LEVEL == 'DEBUG') {
+                            console.log('SUCCESS: Discovered characteristics for service uuid = ' + service.uuid);
+                        }
                         if(callback) {
                             startTimeoutResponseProcess(response);
                             callback(characteristics);
@@ -172,7 +199,7 @@ function characteristicEvent(device, serviceId, characteristicId, response, call
         }
         if (!foundCharacteristic) {
             clearTimeout(timeoutResponseProcess);
-            util.sendNotFoundResponse(response, 'Characteristic with id = ' + characteristicId + ' not found.');
+            util.sendNotFoundResponse(response, 'Characteristic with uuid = ' + characteristicId + ' not found.');
         }
     });
 }
@@ -182,13 +209,15 @@ function readCharacteristic(device, serviceId, characteristicId, response) {
         characteristic.read( function(error, data) {
             clearTimeout(timeoutResponseProcess);
             if(error) {
-                util.sendErrorResponse(response, 'Error reading data to characteristic id = ' + characteristic.uuid, error);
+                util.sendErrorResponse(response, 'Error reading data from characteristic uuid = ' + characteristic.uuid, error);
             } else {
-                console.log('Success reading data from characteristic id = ' + characteristic.uuid);
+                if( LOG_LEVEL == 'DEBUG') {
+                    console.log('SUCCESS: reading data from characteristic uuid = ' + characteristic.uuid + ' ; HEX data = ' + data.toString('hex'));
+                }
                 try {
                     util.sendResponse(response, 200, JSON.stringify({ 'data' : data.toString('base64')}));
                 } catch (error) {
-                    util.sendErrorResponse(response, 'Error transforming data to base64 of characteristic with id = ' + characteristic.uuid, error);
+                    util.sendErrorResponse(response, 'Error transforming data to base64 of characteristic with uuid = ' + characteristic.uuid, error);
                 }
             }
         });
@@ -212,26 +241,30 @@ function writeCharacteristic(device, serviceId, characteristicId, response, requ
                     characteristic.write(new Buffer(jsonRequest.data, 'base64'), withResponse, function(error) {
                         clearTimeout(timeoutResponseProcess);
                         if(error) {
-                            util.sendErrorResponse(response, 'Error writing data to characteristic id = ' + characteristic.uuid, error);
+                            util.sendErrorResponse(response, 'Error writing data to characteristic uuid = ' + characteristic.uuid, error);
                         } else {
-                            console.log('Success writing data to characteristic id = ' + characteristic.uuid);
-                            util.sendOkResponse(response, 'Success writing data to characteristic id = ' + characteristic.uuid);
+                            if( LOG_LEVEL == 'DEBUG') {
+                                console.log('SUCCESS: Writing data to characteristic uuid = ' + characteristic.uuid);
+                            }
+                            util.sendOkResponse(response, 'Success writing data to characteristic uuid = ' + characteristic.uuid);
                         }
                     });
                 } else {
                     clearTimeout(timeoutResponseProcess);
-                    util.sendErrorResponse(response, 'Error writing data to characteristic id = ' + characteristic.uuid, 'No data provided.');
+                    util.sendErrorResponse(response, 'Error writing data to characteristic uuid = ' + characteristic.uuid, 'No data provided.');
                 }
             } catch (error) {
                 clearTimeout(timeoutResponseProcess);
-                util.sendErrorResponse(response, 'Error parsing request body to write to characteristic with id = ' + characteristic.uuid, error);
+                util.sendErrorResponse(response, 'Error parsing request body to write to characteristic with uuid = ' + characteristic.uuid, error);
             }
         });
     });
 }
 
 function discoverCharacteristicDescriptors(device, serviceId, characteristicId, response, callback) {
-    console.log('Discovering characteristic descriptors for device with id = ' +  device.id);
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Discovering characteristic descriptors for device with mac-id = ' +  device.id);
+    }
     discoverServiceCharacteristics(device, serviceId, response, function descriptorsCallback(characteristics) {
         var foundCharacteristic = false;
         for (var i in characteristics) {
@@ -243,7 +276,9 @@ function discoverCharacteristicDescriptors(device, serviceId, characteristicId, 
                     if(error) {
                         util.sendErrorResponse(response, 'Discover descriptors for characteristic uuid = ' + characteristic.uuid, error);
                     } else {
-                        console.log(' discovered descriptors for characteristic uuid - ' + characteristic.uuid);
+                        if( LOG_LEVEL == 'DEBUG') {
+                            console.log('SUCCESS: Discovered descriptors for characteristic uuid = ' + characteristic.uuid);
+                        }
                         if(callback) {
                             startTimeoutResponseProcess(response);
                             callback(descriptors);
@@ -267,13 +302,15 @@ function readDescriptor(device, serviceId, characteristicId, descriptorId, respo
         descriptor.readValue(function(error, data) {
             clearTimeout(timeoutResponseProcess);
             if(error) {
-                util.sendErrorResponse(response, 'Error reading data from descriptor id = ' + descriptor.uuid, error);
+                util.sendErrorResponse(response, 'Error reading data from descriptor uuid = ' + descriptor.uuid, error);
             } else {
-                console.log('Success reading data from descriptor id = ' + descriptor.uuid);
+                if( LOG_LEVEL == 'DEBUG') {
+                    console.log('SUCCESS: Reading data from descriptor uuid = ' + descriptor.uuid + '; HEX data = ' + data.toString('hex'));
+                }
                 try {
                     util.sendResponse(response, 200, JSON.stringify({ 'data' : data.toString('base64')}));
                 } catch (error) {
-                    util.sendErrorResponse(response, 'Error transforming data to base64 of descriptor with id = ' + descriptor.uuid, error);
+                    util.sendErrorResponse(response, 'Error transforming data to base64 of descriptor with uuid = ' + descriptor.uuid, error);
                 }
             }
         });
@@ -294,19 +331,21 @@ function writeDescriptor(device, serviceId, characteristicId, descriptorId, resp
                     descriptor.writeValue(new Buffer(jsonRequest.data, 'base64'), function(error) {
                         clearTimeout(timeoutResponseProcess);
                         if(error) {
-                            util.sendErrorResponse(response, 'Error writing data to descriptor id = ' + descriptor.uuid, error);
+                            util.sendErrorResponse(response, 'Error writing data to descriptor uuid = ' + descriptor.uuid, error);
                         } else {
-                            console.log('Success writing data to descriptor id = ' + descriptor.uuid);
-                            util.sendOkResponse(response, 'Success writing data to descriptor id = ' + descriptor.uuid);
+                            if( LOG_LEVEL == 'DEBUG') {
+                                console.log('SUCCESS: Writing data to descriptor uuid = ' + descriptor.uuid);
+                            }
+                            util.sendOkResponse(response, 'Success writing data to descriptor uuid = ' + descriptor.uuid);
                         }
                     });
                 } else {
                     clearTimeout(timeoutResponseProcess);
-                    util.sendErrorResponse(response, 'Error writing data to descriptor id = ' + descriptor.uuid, 'No data provided.');
+                    util.sendErrorResponse(response, 'Error writing data to descriptor uuid = ' + descriptor.uuid, 'No data provided.');
                 }
             } catch (error) {
                 clearTimeout(timeoutResponseProcess);
-                util.sendErrorResponse(response, 'Error parsing request body to write to descriptor with id = ' + descriptor.uuid, error);
+                util.sendErrorResponse(response, 'Error parsing request body to write to descriptor with uuid = ' + descriptor.uuid, error);
             }
         });
     });
@@ -326,7 +365,7 @@ function descriptorEvent(device, serviceId, characteristicId, descriptorId, resp
         }
         if (!foundDescriptor) {
             clearTimeout(timeoutResponseProcess);
-            util.sendNotFoundResponse(response, 'Descriptor with id = ' + descriptorId + ' not found.');
+            util.sendNotFoundResponse(response, 'Descriptor with uuid = ' + descriptorId + ' not found.');
         }
     });
 }
@@ -364,17 +403,19 @@ function executeMainAction(response, requestUrl, urlTokens, callbackAction) {
                         callbackAction(device);
                     });
                 } else {
-                    util.sendNotFoundResponse(response, 'Device with uuid = ' + device.uuid + ' not found during new scanning');
+                    util.sendNotFoundResponse(response, 'Device with id = ' + device.id + ' not found during new scanning');
                 }
             };
         }
     }
     if ( result.device ) {
         if(scan) {
-            deviceScanId = result.device.uuid;
+            deviceScanId = result.device.id;
             restartScanning();
         } else {
-            console.log('Getting services for device with id = ' + result.device.id);
+            if( LOG_LEVEL == 'DEBUG') {
+                console.log('Getting services for device with mac-id = ' + result.device.id);
+            }
             checkDeviceStatus(result.device, response, function() {
                 callbackAction(result.device)
             });
@@ -390,6 +431,23 @@ function executeMainAction(response, requestUrl, urlTokens, callbackAction) {
     }
 }
 
+function processPostRequest(request, response, processCallback) {
+    var body = [];
+    request.on('data', function(chunk) {
+        body.push(chunk);
+    }).on('end', function() {
+        body = Buffer.concat(body).toString();
+        try {
+            var jsonRequestBody = JSON.parse(body);
+            if(processCallback) {
+                processCallback(jsonRequestBody);
+            }
+        } catch (error) {
+            util.sendErrorResponse(response, 'Error parsing request body', error);
+        }
+    });
+}
+
 var server = http.createServer(
     function handleRequest(request, response) {
         var requestUrl = request.url;
@@ -397,22 +455,23 @@ var server = http.createServer(
         startTimeoutResponseProcess(response);
         if( requestUrl.indexOf('/config') > -1 && urlTokens.length == 2 ) {
             clearTimeout(timeoutResponseProcess);
-            var body = [];
-            request.on('data', function(chunk) {
-                body.push(chunk);
-            }).on('end', function() {
-                body = Buffer.concat(body).toString();
-                try {
-                    var jsonRequest = JSON.parse(body);
-                    if(jsonRequest.deviceIdentifier) {
-                        deviceIdentifier = jsonRequest.deviceIdentifier;
-                        restartScanning();
-                        util.sendOkResponse(response, 'New config applied. Scanning restarted');
-                    } else {
-                        util.sendErrorResponse(response, 'No deviceIdentifier provided in json');
-                    }
-                } catch (error) {
-                    util.sendErrorResponse(response, 'Error parsing request body to apply config', error);
+            processPostRequest(request, response, function(jsonRequestBody) {
+                if(jsonRequestBody.deviceIdentifier) {
+                    deviceIdentifier = jsonRequestBody.deviceIdentifier;
+                    restartScanning();
+                    util.sendOkResponse(response, 'New config applied. Scanning restarted');
+                } else {
+                    util.sendErrorResponse(response, 'No deviceIdentifier provided in json');
+                }
+            });
+        } else if ( requestUrl.indexOf('/logging') > -1 && urlTokens.length == 2 && request.method == 'POST' ) {
+            clearTimeout(timeoutResponseProcess);
+            processPostRequest(request, response, function(jsonRequestBody) {
+                if(jsonRequestBody.LOG_LEVEL) {
+                    LOG_LEVEL = jsonRequestBody.LOG_LEVEL;
+                    util.sendOkResponse(response, 'LOG_LEVEL = ' + LOG_LEVEL + ' is applied');
+                } else {
+                    util.sendErrorResponse(response, 'No LOG_LEVEL provided in json');
                 }
             });
         } else if (requestUrl.indexOf('/scan/restart') > -1 && urlTokens.length == 3) {
@@ -468,5 +527,7 @@ var server = http.createServer(
         }
     }
 ).listen(PORT, function serverListening() {
-    console.log('Server is listening to port : ' + PORT);
+    if( LOG_LEVEL == 'DEBUG') {
+        console.log('Server is listening to port : ' + PORT);
+    }
 });
