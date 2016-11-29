@@ -19,14 +19,14 @@ http://localhost:10500/config/scan
 </pre>
 ###### POST JSON raw body
 <pre>
-{ "deviceIdentifier" : "name/mac" }
+{ "deviceIdentifier" : "name"/"mac" }
 </pre>
 ###### Response
 <pre>
 "New config applied. Scanning restarted"
 </pre>
 #### Turn ON/OFF level of logging (POST)
-This endpoint provides the possibility to turn ON/OFF DEBUG level logging
+This endpoint provides the possibility to turn ON/OFF DEBUG level logging (empty level value will turn off/ "DEBUG" will show exessive logs)
 ###### Endpoint 2
 <pre>
 http://localhost:10500/config/logging
@@ -37,7 +37,7 @@ http://localhost:10500/config/logging
 </pre>
 ###### Response
 <pre>
-"LOG_LEVEL = LOG_LEVEL_VALUE is applied"
+"LOG_LEVEL = ${LOG_LEVEL} is applied"
 </pre>
 #### Restart scanning
 This endpoint sends the command to restart scanning to a container. As a result all previously stored devices will be wiped out and then the scanning will be restarted. 
