@@ -6,6 +6,7 @@ var util = require('./util');
 
 const PORT = 10500;
 const maxTimeout = 32 * 1000; // 32 sec
+const BUFFER_URL = 'notify_buffer/';
 
 var LOG_LEVEL/* = 'DEBUG'*/;
 var timeoutResponseProcess;
@@ -14,6 +15,7 @@ var devices = {};
 var deviceIdentifier = null;
 var deviceScanId ;
 var deviceScanCallback ;
+var notifyBuffer = {};
 
 noble.on('stateChange', function(state) {
     if( LOG_LEVEL == 'DEBUG') {
@@ -74,7 +76,7 @@ noble.on('discover', function(peripheral) {
     if (result) {
         generatedID = result.id;
     } else {
-        generatedID = util.generateID();
+        generatedID = util.generateID(10);
     }
     devices[generatedID] = peripheral;
 });
@@ -256,6 +258,29 @@ function writeCharacteristic(device, serviceId, characteristicId, response, requ
             } catch (error) {
                 clearTimeout(timeoutResponseProcess);
                 util.sendErrorResponse(response, 'Error parsing request body to write to characteristic with uuid = ' + characteristic.uuid, error);
+            }
+        });
+    });
+}
+
+function notify(device, serviceId, characteristicId, response, notify_flag) {
+    characteristicEvent(device, serviceId, characteristicId, response, function writeCharacteristicCallback(characteristic) {
+        characteristic.notify(notify_flag, function(error) {
+            clearTimeout(timeoutResponseProcess);
+            if(error) {
+                util.sendErrorResponse(response, 'Error turning ON notification for characteristic uuid = ' + characteristic.uuid, error);
+            } else {
+                if( LOG_LEVEL == 'DEBUG') {
+                    console.log('SUCCESS: Notification is turned ON for characteristic uuid = ' + characteristic.uuid);
+                }
+                var id = 'BUFFER_' + util.generateID(7); // TODO: decide what size do we need for this ID
+                var responseJson = {'message' : 'Notification is turned ON for characteristic uuid = ' + characteristic.uuid,
+                    'url': BUFFER_URL + id};
+                util.sendOkResponse(response, responseJson);
+                notifyBuffer[id] = [];
+                characteristic.on('read', function(data, isNotification) {
+                    notifyBuffer[id].push(data);
+                });
             }
         });
     });
@@ -501,6 +526,13 @@ var server = http.createServer(
                     readCharacteristic(device, serviceId, characteristicId, response);
                 });
             }
+        } else if (requestUrl.indexOf('/characteristic') > -1 && requestUrl.indexOf('/notify') > -1 && urlTokens.length == 9) {
+            // TODO: Do we need 2 options: turn ON/OFF notify ?
+            var serviceId = urlTokens[5];
+            var characteristicId = urlTokens[7];
+            executeMainAction(response, requestUrl, urlTokens, function(device) {
+                notify(device, serviceId, characteristicId, response, true);
+            });
         } else if (requestUrl.indexOf('/descriptors') > -1 && urlTokens.length == 9) {
             var serviceId = urlTokens[5];
             var characteristicId = urlTokens[7];
@@ -520,6 +552,14 @@ var server = http.createServer(
                     writeDescriptor(device, serviceId, characteristicId, descriptorId, response, request);
                 });
             }*/
+        } else if (requestUrl.indexOf(BUFFER_URL) > -1 && urlTokens.length == 3) {
+            var bufferId = urlTokens[2];
+            if( bufferId in notifyBuffer) {
+                var responseJson = notifyBuffer[bufferId];
+                util.sendOkResponse(response, responseJson);
+            } else {
+                util.sendNotFoundResponse(response, 'There\'s no such notify buffer ID. Try reconnecting a-new to device to get new notify buffer url.');
+            }
         } else {
             clearTimeout(timeoutResponseProcess);
             response.writeHead(200, {'Content-Type' : 'application-json'});

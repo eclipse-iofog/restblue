@@ -243,6 +243,24 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descr
   "data": "base64 encoded data"
 }
 </pre>
+#### Subscribe to characteristic's notify event (GET)
+This endpoint sets notify property to true for specified characteristic's cID for specified service sID and device dID/Mac Address and returns url where buffered values can be picked up.
+###### Endpoint 17
+<pre>
+http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/notify
+</pre>
+###### Endpoint 18
+<pre>
+http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/notify
+</pre>
+###### Response
+<pre>
+{
+  "message": "Notification is turned ON for characteristic uuid = CH_ID ",
+  "url": "notify_buffer/BUFFER_GENERATEDID"
+}
+</pre>
 
-For Endpoints number 5-16 all the operations will be performed with previously stored devices (the scanning starts upon container's start). If to the url add parameter : ?scan=true, the device will be scanned anew.
-For Endpoints numbers 6, 8, 10, 12, 14, 16 (basically the ones with mac parameter to specify device) if add scan=true parameter to url, new device can be searched.
+
+For Endpoints number 5-18 all the operations will be performed with previously stored devices (the scanning starts upon container's start). If to the url add parameter : ?scan=true, the device will be scanned anew.
+For Endpoints numbers 6, 8, 10, 12, 14, 16, 18 (basically the ones with mac parameter to specify device) if add scan=true parameter to url, new device can be searched.

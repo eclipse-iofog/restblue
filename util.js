@@ -97,12 +97,11 @@ exports.sendErrorResponse = function sendErrorResponse(response, msg, error){
     module.exports.sendResponse(response, 500, JSON.stringify( msg + '. Error: ' + error ));
 };
 
-exports.generateID = function() {
+exports.generateID = function(length) {
     const ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const ID_LENGTH = 10;
 
     var rtn = '';
-    for (var i = 0; i < ID_LENGTH; i++) {
+    for (var i = 0; i < length; i++) {
         rtn += ALPHABET.charAt(Math.floor(Math.random() * ALPHABET.length));
     }
     return rtn;
