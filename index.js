@@ -104,6 +104,12 @@ function connectToDevice(device, response, onConnectCallback) {
         device.on('disconnect', function() {
             clearTimeout(timeoutResponseProcess);
             util.sendErrorResponse(response, 'Device with mac-id = ' + device.id + ' disconnected. ');
+            for (var key in notifyBuffer) {
+                if(notifyBuffer[key].deviceId == device.id) {
+                    notifyBuffer[key].closed = true;
+                    break;
+                }
+            }
         });
     } else {
         clearTimeout(timeoutResponseProcess);
@@ -277,9 +283,9 @@ function notify(device, serviceId, characteristicId, response, notify_flag) {
                 var responseJson = {'message' : 'Notification is turned ON for characteristic uuid = ' + characteristic.uuid,
                     'url': BUFFER_URL + id};
                 util.sendOkResponse(response, responseJson);
-                notifyBuffer[id] = [];
+                notifyBuffer[id] = { timestamp: Date.now(), deviceId: device.id, data: []};
                 characteristic.on('read', function(data, isNotification) {
-                    notifyBuffer[id].push(data);
+                    notifyBuffer[id].data.push(data.toString('base64'));
                 });
             }
         });
@@ -555,8 +561,13 @@ var server = http.createServer(
         } else if (requestUrl.indexOf(BUFFER_URL) > -1 && urlTokens.length == 3) {
             var bufferId = urlTokens[2];
             if( bufferId in notifyBuffer) {
-                var responseJson = notifyBuffer[bufferId];
+                var responseJson = notifyBuffer[bufferId].data;
+                notifyBuffer[bufferId].data = [];
+                notifyBuffer[bufferId].timestamp = new Date.now();
                 util.sendOkResponse(response, responseJson);
+                if(notifyBuffer[bufferId].closed) {
+                    delete notifyBuffer[bufferId];
+                }
             } else {
                 util.sendNotFoundResponse(response, 'There\'s no such notify buffer ID. Try reconnecting a-new to device to get new notify buffer url.');
             }
