@@ -563,7 +563,7 @@ var server = http.createServer(
             if( bufferId in notifyBuffer) {
                 var responseJson = notifyBuffer[bufferId].data;
                 notifyBuffer[bufferId].data = [];
-                notifyBuffer[bufferId].timestamp = new Date.now();
+                notifyBuffer[bufferId].timestamp = Date.now();
                 util.sendOkResponse(response, responseJson);
                 if(notifyBuffer[bufferId].closed) {
                     delete notifyBuffer[bufferId];
