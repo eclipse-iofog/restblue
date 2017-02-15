@@ -5,6 +5,8 @@ RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y apt-utils
 RUN DEBIAN_FRONTEND=noninteractive apt-get -qq -y install bluetooth
 RUN DEBIAN_FRONTEND=noninteractive apt-get -qq -y install bluez
+#for DEBUG
+#RUN DEBIAN_FRONTEND=noninteractive apt-get -qq -y install bluez-hcidump
 RUN DEBIAN_FRONTEND=noninteractive apt-get -qq -y install libbluetooth-dev
 RUN DEBIAN_FRONTEND=noninteractive apt-get -qq -y install libudev-dev
 RUN DEBIAN_FRONTEND=noninteractive apt-get -qq -y install nodejs
@@ -15,3 +17,5 @@ COPY . /src
 RUN cd /src; npm install
 
 CMD ["node", "/src/index.js"]
+#for DEBUG
+#CMD ["/bin/sh", "/src/cmd.sh"]
