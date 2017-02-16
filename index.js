@@ -16,6 +16,7 @@ var deviceIdentifier = null;
 var deviceScanId ;
 var deviceScanCallback ;
 var notifyBuffer = {};
+var blPoweredOn = false;
 
 noble.on('stateChange', function(state) {
     if( LOG_LEVEL == 'DEBUG') {
@@ -25,6 +26,7 @@ noble.on('stateChange', function(state) {
         if( LOG_LEVEL == 'DEBUG') {
             console.log('powerOn');
         }
+        blPoweredOn = true;
         noble.startScanning(null, false, function(error){
             if(error) {
                 // console.error('There was an error with starting the scan: ', error);
@@ -35,6 +37,7 @@ noble.on('stateChange', function(state) {
             }
         });
     } else {
+        blPoweredOn = false;
         if( LOG_LEVEL == 'DEBUG') {
             console.log(state);
         }
@@ -571,6 +574,8 @@ var server = http.createServer(
             } else {
                 util.sendNotFoundResponse(response, 'There\'s no such notify buffer ID. Try reconnecting a-new to device to get new notify buffer url.');
             }
+        } if (requestUrl.indexOf('/status') > -1) {
+            util.sendOkResponse(response, { bluetooth_adapter_powered_on: blPoweredOn});
         } else {
             clearTimeout(timeoutResponseProcess);
             response.writeHead(200, {'Content-Type' : 'application-json'});
