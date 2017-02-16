@@ -260,6 +260,19 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/notif
   "url": "notify_buffer/BUFFER_GENERATEDID"
 }
 </pre>
+#### Check status of Bluetooth Adapter (GET)
+This endpoint return the status of Bluetooth Adapter: if it'spowered on/off (true/false).
+###### Endpoint 19
+<pre>
+http://localhost:10500/status
+</pre>
+###### Response
+<pre>
+{
+  "bluetooth_adapter_powered_on": true/false
+}
+</pre>
+
 
 
 For Endpoints number 5-18 all the operations will be performed with previously stored devices (the scanning starts upon container's start). If to the url add parameter : ?scan=true, the device will be scanned anew.
