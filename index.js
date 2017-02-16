@@ -29,7 +29,8 @@ noble.on('stateChange', function(state) {
         blPoweredOn = true;
         noble.startScanning(null, false, function(error){
             if(error) {
-                // console.error('There was an error with starting the scan: ', error);
+                // always = true, doesn't give any specifics what's wrong
+                // console.error('There was an error starting the scan: ', error);
             } else {
                 if( LOG_LEVEL == 'DEBUG') {
                     console.log('Scanning started successfully.');
@@ -574,7 +575,9 @@ var server = http.createServer(
             } else {
                 util.sendNotFoundResponse(response, 'There\'s no such notify buffer ID. Try reconnecting a-new to device to get new notify buffer url.');
             }
-        } if (requestUrl.indexOf('/status') > -1) {
+            clearTimeout(timeoutResponseProcess);
+        } else if (requestUrl.indexOf('/status') > -1) {
+            clearTimeout(timeoutResponseProcess);
             util.sendOkResponse(response, { bluetooth_adapter_powered_on: blPoweredOn});
         } else {
             clearTimeout(timeoutResponseProcess);
