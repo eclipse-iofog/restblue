@@ -1,5 +1,6 @@
 FROM ubuntu:16.10
-#FROM hypriot/rpi-node #raspberry
+# for raspberryPi
+#FROM hypriot/rpi-node
 
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y apt-utils
