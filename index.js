@@ -5,7 +5,8 @@ var url = require('url');
 var util = require('./util');
 
 const PORT = 10500;
-const maxTimeout = 32 * 1000; // 32 sec
+const maxTimeout = 32 * 1000; // 32 sec in milliseconds
+const defaultDeviceNotifyTimeout = 60 * 1000; // 1 min in milliseconds
 const BUFFER_URL = 'notify_buffer/';
 
 var LOG_LEVEL/* = 'DEBUG'*/;
@@ -107,7 +108,7 @@ function connectToDevice(device, response, onConnectCallback) {
         });
         device.on('disconnect', function() {
             clearTimeout(timeoutResponseProcess);
-            util.sendErrorResponse(response, 'Device with mac-id = ' + device.id + ' disconnected. ');
+            util.sendErrorResponse(response, 'Device with mac-id = ' + device.id + ' disconnected. ', 'DEVICE_DISCONNECTED');
             for (var key in notifyBuffer) {
                 if(notifyBuffer[key].deviceId == device.id) {
                     notifyBuffer[key].closed = true;
@@ -263,7 +264,7 @@ function writeCharacteristic(device, serviceId, characteristicId, response, requ
                     });
                 } else {
                     clearTimeout(timeoutResponseProcess);
-                    util.sendErrorResponse(response, 'Error writing data to characteristic uuid = ' + characteristic.uuid, 'No data provided.');
+                    util.sendErrorResponse(response, 'Error writing data to characteristic uuid = ' + characteristic.uuid, 'NO_DATA_PROVIDED');
                 }
             } catch (error) {
                 clearTimeout(timeoutResponseProcess);
@@ -273,7 +274,7 @@ function writeCharacteristic(device, serviceId, characteristicId, response, requ
     });
 }
 
-function notify(device, serviceId, characteristicId, response, notify_flag) {
+function notify(device, serviceId, characteristicId, response, notify_flag, notify_device_timeout) {
     characteristicEvent(device, serviceId, characteristicId, response, function writeCharacteristicCallback(characteristic) {
         characteristic.notify(notify_flag, function(error) {
             clearTimeout(timeoutResponseProcess);
@@ -287,9 +288,17 @@ function notify(device, serviceId, characteristicId, response, notify_flag) {
                 var responseJson = {'message' : 'Notification is turned ON for characteristic uuid = ' + characteristic.uuid,
                     'url': BUFFER_URL + id};
                 util.sendOkResponse(response, responseJson);
-                notifyBuffer[id] = { timestamp: Date.now(), deviceId: device.id, data: []};
-                characteristic.on('read', function(data, isNotification) {
-                    notifyBuffer[id].data.push(data.toString('base64'));
+                var notifyDeviceTimeout = defaultDeviceNotifyTimeout;
+                if (notify_device_timeout) {
+                    notifyDeviceTimeout = notify_device_timeout;
+                }
+                notifyBuffer[id] = { timestamp: Date.now(), deviceId: device.id, data: [], timeout: notifyDeviceTimeout , characteristic: characteristic};
+                characteristic.on('data', function(data, isNotification) { // read or data event
+                    //console.log('got data from notify : ' + data);
+                    var notifyBufferCurrentObject = notifyBuffer[id];
+                    notifyBufferCurrentObject.data.push(data.toString('base64'));
+                    notifyBufferCurrentObject.timestamp = Date.now();
+                    notifyBuffer[id] = notifyBufferCurrentObject;
                 });
             }
         });
@@ -376,7 +385,7 @@ function writeDescriptor(device, serviceId, characteristicId, descriptorId, resp
                     });
                 } else {
                     clearTimeout(timeoutResponseProcess);
-                    util.sendErrorResponse(response, 'Error writing data to descriptor uuid = ' + descriptor.uuid, 'No data provided.');
+                    util.sendErrorResponse(response, 'Error writing data to descriptor uuid = ' + descriptor.uuid, 'NO_DATA_PROVIDED');
                 }
             } catch (error) {
                 clearTimeout(timeoutResponseProcess);
@@ -408,7 +417,7 @@ function descriptorEvent(device, serviceId, characteristicId, descriptorId, resp
 function checkTimeout(response) {
     var time = Date.now();
     if(time - currTime >= maxTimeout) {
-        util.sendErrorResponse(response, 'Sorry, system didn\'t get response in ' + maxTimeout + ' seconds', 'Timeout exception.');
+        util.sendErrorResponse(response, 'Sorry, system didn\'t get response in ' + maxTimeout + ' seconds', 'REQUEST_TIMEOUT_EXCEPTION');
     }
 }
 
@@ -496,7 +505,7 @@ var server = http.createServer(
                     restartScanning();
                     util.sendOkResponse(response, 'New config applied. Scanning restarted');
                 } else {
-                    util.sendErrorResponse(response, 'No deviceIdentifier provided in json');
+                    util.sendErrorResponse(response, 'No deviceIdentifier provided in json', 'IDENTIFIER_MISSING');
                 }
             });
         } else if ( requestUrl.indexOf('/config/logging') > -1 && urlTokens.length == 3 && request.method == 'POST' ) {
@@ -506,7 +515,7 @@ var server = http.createServer(
                     LOG_LEVEL = jsonRequestBody.LOG_LEVEL;
                     util.sendOkResponse(response, 'LOG_LEVEL = ' + LOG_LEVEL + ' is applied');
                 } else {
-                    util.sendErrorResponse(response, 'No LOG_LEVEL provided in json');
+                    util.sendErrorResponse(response, 'No LOG_LEVEL provided in json', 'LOG_LEVEL_MISSING');
                 }
             });
         } else if (requestUrl.indexOf('/scan/restart') > -1 && urlTokens.length == 3) {
@@ -540,8 +549,13 @@ var server = http.createServer(
             // TODO: Do we need 2 options: turn ON/OFF notify ?
             var serviceId = urlTokens[5];
             var characteristicId = urlTokens[7];
+            var notifyDeviceTimeout;
+            var urlParams = urlTokens[urlTokens.length - 1 ].split('?');
+            if (urlParams.length >= 2) {
+                notifyDeviceTimeout = url.parse(requestUrl, true).query.timeout;
+            }
             executeMainAction(response, requestUrl, urlTokens, function(device) {
-                notify(device, serviceId, characteristicId, response, true);
+                notify(device, serviceId, characteristicId, response, true, notifyDeviceTimeout);
             });
         } else if (requestUrl.indexOf('/descriptors') > -1 && urlTokens.length == 9) {
             var serviceId = urlTokens[5];
@@ -565,13 +579,33 @@ var server = http.createServer(
         } else if (requestUrl.indexOf(BUFFER_URL) > -1 && urlTokens.length == 3) {
             var bufferId = urlTokens[2];
             if( bufferId in notifyBuffer) {
-                var responseJson = notifyBuffer[bufferId].data;
-                notifyBuffer[bufferId].data = [];
-                notifyBuffer[bufferId].timestamp = Date.now();
-                util.sendOkResponse(response, responseJson);
+                var responseMessage = {};
                 if(notifyBuffer[bufferId].closed) {
+                    responseMessage.data = notifyBuffer[bufferId].data;
+                    responseMessage.device_disconnected = true;
                     delete notifyBuffer[bufferId];
+                } else {
+                    if(notifyBuffer[bufferId].data.length > 0) { // if data is not empty we update timestamp
+                        notifyBuffer[bufferId].timestamp = Date.now();
+                        responseMessage.data = notifyBuffer[bufferId].data;
+                        notifyBuffer[bufferId].data = [];
+                    } else if ( Date.now() - notifyBuffer[bufferId].timestamp > notifyBuffer[bufferId].timeout ) {
+                        // if we have empty for specified timeout: didn't get anything on notify, we discharge url
+                        util.sendErrorResponse(response, 'RESTBlue didn\'t receive any data on notify from device with id = ' + notifyBuffer[bufferId].deviceId + ' for specified timeout = ' + notifyBuffer[bufferId].timeout + '. Discharging notify buffer url.', 'TIMEOUT_DATA');
+                        var characteristic = notifyBuffer[bufferId].characteristic;
+                        notifyBuffer[bufferId].characteristic.notify(false, function(error) {
+                            if(error) {
+                                util.sendErrorResponse(response, 'Error turning OFF notification for characteristic uuid = ' + characteristic.uuid, error);
+                            } else {
+                                if( LOG_LEVEL == 'DEBUG') {
+                                    console.log('SUCCESS: Notification is turned OFF for characteristic uuid = ' + characteristic.uuid);
+                                }
+                            }
+                        });
+                        delete notifyBuffer[bufferId];
+                    }
                 }
+                util.sendOkResponse(response, responseMessage);
             } else {
                 util.sendNotFoundResponse(response, 'There\'s no such notify buffer ID. Try reconnecting a-new to device to get new notify buffer url.');
             }

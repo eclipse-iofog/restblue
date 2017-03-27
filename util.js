@@ -94,7 +94,8 @@ exports.sendNotFoundResponse = function sendNotFoundResponse(response, msg){
 
 exports.sendErrorResponse = function sendErrorResponse(response, msg, error){
     console.error(msg + '. Error : ', error);
-    module.exports.sendResponse(response, 500, JSON.stringify( msg + '. Error: ' + error ));
+    var responseObject = { message: msg, error: error};
+    module.exports.sendResponse(response, 500, JSON.stringify( responseObject ));
 };
 
 exports.generateID = function(length) {
