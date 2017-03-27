@@ -244,10 +244,14 @@ http://localhost:10500/device/mac/{mac}/service/{sID}/characteristic/{cID}/descr
 }
 </pre>
 #### Subscribe to characteristic's notify event (GET)
-This endpoint sets notify property to true for specified characteristic's cID for specified service sID and device dID/Mac Address and returns url where buffered values can be picked up.
+This endpoint sets notify property to true for specified characteristic's cID for specified service sID and device dID/Mac Address and returns url where buffered values can be picked up. If timeout parameter is specified (in millisecond) it'll be applied, otherwise RESTBlue will use the default value 1 min (60000 milliseconds). 
+This timeout is specified to handle usecase when device is still connected and advertising, but RESTBlue stopped receiving any data on notify subscription. 
+When picking up buffered notify data: 
+- If RESTBlue doesn't receive any data for more than specified timeout it will unsubscribe and remove notify buffer url and return 500 status code with error:TIMEOUT_DATA.
+- In case if device disconnected while being subscribed the response will be OK with device_disconnected:true and last batch of data.  
 ###### Endpoint 17
 <pre>
-http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/notify
+http://localhost:10500/device/iid/{dID}/service/{sID}/characteristic/{cID}/notify??timeout=TIME_MILLISEC
 </pre>
 ###### Endpoint 18
 <pre>
