@@ -2,14 +2,13 @@
  * Created by root on 16.8.16.
  */
 
-
 /*
  * Util methods to transform objects of devices, services and characteristics to arrays ready to be send as JSON.
  */
 exports.servicesToJSON = function servicesToJSON(services) {
     var servicesResponse = [];
     for (var i in services) {
-        console.log('  [' + i + '] service uuid: ' + services[i]);
+        //console.log('  [' + i + '] service uuid: ' + services[i]);
         var service = services[i];
         servicesResponse.push({
             'uuid' : service.uuid,
@@ -25,10 +24,13 @@ exports.devicesToJSON = function devicesToJSON(devices) {
     for (var iid in devices) {
         responseDevices.push({
             'id' : iid,
-            'mac-address' : devices[iid].address,
-            'local-name' : devices[iid].advertisement.localName,
-            'mac-id' : devices[iid].id,
-            'rssi' : devices[iid].rssi
+            'mac_address' : devices[iid].device.address,
+            'local_name' : devices[iid].device.advertisement.localName,
+            'mac_id' : devices[iid].device.id,
+            'rssi' : devices[iid].device.rssi,
+            'disconnected' : devices[iid].disconnected,
+            'device_reconnect_timeout' : devices[iid].deviceReconnectTimeout,
+            'device_reconnect_attempts' : devices[iid].deviceReconnectAttempts
         });
     }
     return responseDevices;
@@ -80,21 +82,22 @@ exports.sendResponse = function sendResponse(response, statusCode, json) {
     response.end(json);
 };
 
-exports.sendOkResponse = function sendOkResponse(response, array){
+exports.sendOkResponse = function sendOkResponse(response, object){
     try {
-        module.exports.sendResponse(response, 200, JSON.stringify(array));
+        module.exports.sendResponse(response, 200, JSON.stringify(object));
     } catch (error) {
         module.exports.sendResponse(response, 400, JSON.stringify(error));
     }
 };
 
-exports.sendNotFoundResponse = function sendNotFoundResponse(response, msg){
-    module.exports.sendResponse(response, 404, JSON.stringify(msg));
+exports.sendNotFoundResponse = function sendNotFoundResponse(response, msg, code){
+    var responseObject = { message: msg, code: code};
+    module.exports.sendResponse(response, 404, JSON.stringify(responseObject));
 };
 
 exports.sendErrorResponse = function sendErrorResponse(response, msg, error){
-    console.error(msg + '. Error : ', error);
-    var responseObject = { message: msg, error: error};
+    console.error(msg + ' : ', error);
+    var responseObject = { message: msg, error: error.toString()};
     module.exports.sendResponse(response, 500, JSON.stringify( responseObject ));
 };
 
@@ -112,7 +115,7 @@ exports.getDeviceByUrl = function (devices, url, urlTokens) {
     var device;
     var errorMsg = '';
     var identifier = urlTokens[3];
-    if(url.indexOf('id') > -1) {
+    if(url.indexOf('iid') > -1) {
         errorMsg = 'No device found with id = ' + identifier;
         if (identifier in devices) {
             device = devices[identifier];
@@ -123,10 +126,10 @@ exports.getDeviceByUrl = function (devices, url, urlTokens) {
             return device.id.toLocaleLowerCase();
         });
         if(result) {
-            device = result.device;
+            device = result.deviceItem;
         }
     }
-    return {'device' : device, 'errorMsg': errorMsg };
+    return {'deviceItem' : device, 'errorMsg': errorMsg };
 }
 
 exports.findDeviceByName = function (devices, name) {
@@ -143,9 +146,9 @@ exports.findDeviceByMac = function (devices, mac) {
 
 function findDeviceByProperty(devices, deviceProperty, getPropertyCb) {
     for (var iid in devices) {
-        var property = getPropertyCb(devices[iid]);
+        var property = getPropertyCb(devices[iid].device);
         if (property == deviceProperty) {
-            return { 'device' : devices[iid], 'id' : iid };
+            return { 'deviceItem' : devices[iid], 'id' : iid };
         }
     }
     return null;
