@@ -278,6 +278,10 @@ http://localhost:10500/status
 </pre>
 
 
+Parameters for endpoint 5-18: 
+- scan=true : This parameter will tell REST Blue to stop scanning, clean up previously stored devices and start scan again and look for specified in the url device.  
+- drct=1000 : Device reconnect timeout. Default value = 1000 millisecond. This parameter is specified in milliseconds, it's a timeout that REST Blue will wait to reconnect to device after receiving disconnect event for this device. REST Blue will try to reconnect only if it was subscribed on device's notifications and is storing data for 'NOTIFY Buffer' functionality.
+- drca=5 : Device reconnect attempts. Default value = 5 attempts. This parameter specifies how many attempts REST Blue should make to reconnect to device in case it lost connection while being subscribed to data notifications.  
 
-For Endpoints number 5-18 all the operations will be performed with previously stored devices (the scanning starts upon container's start). If to the url add parameter : ?scan=true, the device will be scanned anew.
-For Endpoints numbers 6, 8, 10, 12, 14, 16, 18 (basically the ones with mac parameter to specify device) if add scan=true parameter to url, new device can be searched.
+For Endpoints number 5-18 all the operations will be performed with previously scanned devices (the scanning starts upon container's start). 
+For Endpoints numbers 6, 8, 10, 12, 14, 16, 18 (basically the ones with mac parameter to identify device) if add scan=true parameter to url, new device can be searched.
