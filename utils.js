@@ -86,7 +86,7 @@ exports.sendOkResponse = function sendOkResponse(response, object){
     try {
         module.exports.sendResponse(response, 200, JSON.stringify(object));
     } catch (error) {
-        module.exports.sendResponse(response, 400, JSON.stringify(error));
+        module.exports.sendResponse(response, 417, JSON.stringify(error));
     }
 };
 
@@ -98,7 +98,7 @@ exports.sendNotFoundResponse = function sendNotFoundResponse(response, msg, code
 exports.sendErrorResponse = function sendErrorResponse(response, msg, error){
     console.error(msg + ' : ', error);
     var responseObject = { message: msg, error: error.toString()};
-    module.exports.sendResponse(response, 500, JSON.stringify( responseObject ));
+    module.exports.sendResponse(response, 417, JSON.stringify( responseObject ));
 };
 
 exports.generateID = function(length) {

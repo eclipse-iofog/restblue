@@ -21,7 +21,7 @@ var notifyBuffer = {};
 
 exports.DEVICE_NOT_FOUND_CODE = 'DEVICE_NOT_FOUND';
 exports.BUFFER_URL = 'notify_buffer/';
-exports.LOG_LEVEL = 'DEBUG';
+exports.LOG_LEVEL = '' /*'DEBUG'*/;
 exports.timeoutResponseProcess = null;
 exports.blPoweredOn = false;
 

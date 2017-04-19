@@ -42,6 +42,7 @@ var server = http.createServer(
             processPostRequest(request, response, function(jsonRequestBody) {
                 if(jsonRequestBody.LOG_LEVEL) {
                     LOG_LEVEL = jsonRequestBody.LOG_LEVEL;
+                    noble_utils.LOG_LEVEL = LOG_LEVEL;
                     utils.sendOkResponse(response, 'LOG_LEVEL = ' + LOG_LEVEL + ' is applied');
                 } else {
                     utils.sendErrorResponse(response, 'No LOG_LEVEL provided in json', LOG_LEVEL_MISSING);
